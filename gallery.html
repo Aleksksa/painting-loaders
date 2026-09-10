@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Painting Loaders</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
 
   <!-- Theme before first paint, so a dark reload never flashes light. The OS is
        only the opening guess; once you press the toggle, your choice wins. -->
@@ -167,6 +168,9 @@
       flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
       gap: clamp(20px, 4vh, 38px); padding: 0 clamp(20px, 3.5vw, 48px) 40px;
     }
+    .detail-stage {
+      display: flex; flex-direction: column; align-items: center; gap: 12px; flex: none;
+    }
     #detail-tile {
       width: min(36vh, 440px, 80vw); flex: none; cursor: default;
       border-radius: calc(var(--r) + 4px);
@@ -178,16 +182,40 @@
       text-align: center; max-width: 46ch;
       animation: pl-rise 550ms 80ms cubic-bezier(.2,.7,.3,1) both;
     }
-    .eyebrow { font: 500 11px/1 var(--body); letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); }
-    .detail-text h2 { margin: 0; font-size: clamp(30px, 3.4vw, 46px); }
-    .eyebrow:not([hidden]) + h2 { margin-top: -4px; }
+    .eyebrow { font: 500 11px/1 var(--body); letter-spacing: 0.2em; text-transform: uppercase; color: var(--soft); }
+    .detail-text h2 { margin: 0; font-size: clamp(26px, 2.7vw, 38px); }
+    /* The movement reads as a caption under the scene name, so it sits closer to
+       the title than the 14px stack gap would put it. */
+    .detail-text h2 + .eyebrow:not([hidden]) { margin-top: -4px; }
     .detail-text p { margin: 0; font: 400 15px/1.6 var(--body); color: var(--soft); text-wrap: pretty; }
-    #detail-status { min-height: 1.3em; }
+    #detail-status {
+      min-height: 1.3em; text-align: center;
+      animation: pl-rise 550ms 80ms cubic-bezier(.2,.7,.3,1) both;
+    }
     #detail .copy { margin-top: 14px; flex: none; background: var(--sunk); padding: 14px 24px; font-size: 14px; }
     #detail .copy:hover { transform: translateY(-1px); }
 
-    /* ---- boot ---- */
-    @keyframes pl-sweep { from { transform: translateX(-100%) } to { transform: translateX(100%) } }
+    /* ---- boot ----
+       The wait is a painting too: six petals land one after another, a yellow
+       heart drops in last, and the whole bloom washes out and starts again. */
+    @keyframes pl-petal {
+      0%        { opacity: 0;    transform: scale(0.3); }
+      13%       { opacity: 0.92; transform: scale(1.05); }
+      21%, 66%  { opacity: 0.88; transform: scale(1); }
+      92%, 100% { opacity: 0;    transform: scale(0.94); }
+    }
+    @keyframes pl-wash {
+      0%        { opacity: 0;    transform: scale(0.5); }
+      20%       { opacity: 0.42; transform: scale(1.06); }
+      30%, 62%  { opacity: 0.38; transform: scale(1); }
+      92%, 100% { opacity: 0;    transform: scale(0.96); }
+    }
+    @keyframes pl-heart {
+      0%        { opacity: 0;    transform: scale(0.2); }
+      10%       { opacity: 0.95; transform: scale(1.08); }
+      16%, 58%  { opacity: 0.92; transform: scale(1); }
+      84%, 100% { opacity: 0;    transform: scale(0.9); }
+    }
 
     #boot {
       position: fixed; inset: 0; z-index: 60; background: var(--paper);
@@ -196,17 +224,32 @@
     }
     #boot.gone { opacity: 0; pointer-events: none; }
     #boot .brand { color: var(--soft); }
-    #boot .bar {
-      width: 132px; height: 2px; border-radius: 2px; background: var(--line); overflow: hidden;
+    #boot .bloom svg { display: block; overflow: visible; }
+    /* Wet paint over paper. On the dark theme there is no paper to soak into,
+       so the pastels are left to sit on top of it instead. */
+    [data-theme="light"] #boot .bloom { mix-blend-mode: multiply; }
+    #boot .petal, #boot .heart, #boot .wash {
+      opacity: 0; transform-box: fill-box;
+      animation: pl-petal 2.6s cubic-bezier(.2,.7,.3,1) infinite;
+      animation-delay: calc(var(--i, 0) * 110ms);
     }
-    #boot .bar i { display: block; width: 100%; height: 100%; background: var(--accent);
-                   animation: pl-sweep 1.15s cubic-bezier(.4,0,.2,1) infinite; }
+    /* A hair of blur keeps the petal edges wet rather than cut, and crossed petals
+       blend where they overlap — into the paper on light, off the dark on dark,
+       since multiplying pastels against black only makes mud. */
+    #boot .petal { fill: var(--petal); transform-origin: 50% 100%; filter: blur(0.4px); }
+    [data-theme="light"] #boot .petal { mix-blend-mode: multiply; }
+    [data-theme="dark"] #boot .petal { mix-blend-mode: screen; }
+    /* the water that ran ahead of the paint */
+    #boot .wash { fill: #f0bdd2; transform-origin: 50% 50%; filter: blur(7px); animation-name: pl-wash; }
+    #boot .heart { fill: #f7e0a4; transform-origin: 50% 50%; animation-name: pl-heart; }
 
     @media (prefers-reduced-motion: reduce) {
       * { animation: none !important; }
       .card:hover .tile, .card:focus-within .tile, #detail .copy:hover { transform: none; }
       body, .btn, .tile, .status { transition: none; }
-      #boot .bar i { animation: none; }
+      #boot .wash { opacity: 0.38; }
+      #boot .petal { opacity: 0.88; }
+      #boot .heart { opacity: 0.92; }
     }
   </style>
 
@@ -224,8 +267,21 @@
 <body>
 
 <div id="boot">
+  <span class="bloom" aria-hidden="true">
+    <svg viewBox="-40 -40 80 80" width="84" height="84">
+      <ellipse class="wash" cx="0" cy="-2" rx="26" ry="24"/>
+      <g>
+        <g transform="rotate(2) scale(1.02 0.98)"><path class="petal" style="--i:0;--petal:#f4b3cb" d="M0 2C-9-3-13-11-12-18-11-25-5-30 0-29 6-30 12-25 12-18 13-10 8-4 0 2Z"/></g>
+        <g transform="rotate(61) scale(0.96 1.03)"><path class="petal" style="--i:1;--petal:#ea8fb4" d="M0 2C-9-3-13-11-12-18-11-25-5-30 0-29 6-30 12-25 12-18 13-10 8-4 0 2Z"/></g>
+        <g transform="rotate(119) scale(1.04 0.97)"><path class="petal" style="--i:2;--petal:#f4b3cb" d="M0 2C-9-3-13-11-12-18-11-25-5-30 0-29 6-30 12-25 12-18 13-10 8-4 0 2Z"/></g>
+        <g transform="rotate(178) scale(0.98 1.02)"><path class="petal" style="--i:3;--petal:#d8679a" d="M0 2C-9-3-13-11-12-18-11-25-5-30 0-29 6-30 12-25 12-18 13-10 8-4 0 2Z"/></g>
+        <g transform="rotate(241) scale(1.03 0.96)"><path class="petal" style="--i:4;--petal:#ea8fb4" d="M0 2C-9-3-13-11-12-18-11-25-5-30 0-29 6-30 12-25 12-18 13-10 8-4 0 2Z"/></g>
+        <g transform="rotate(300) scale(0.97 1.04)"><path class="petal" style="--i:5;--petal:#f4b3cb" d="M0 2C-9-3-13-11-12-18-11-25-5-30 0-29 6-30 12-25 12-18 13-10 8-4 0 2Z"/></g>
+      </g>
+      <ellipse class="heart" style="--i:6" cx="0" cy="-1" rx="7.4" ry="6.6"/>
+    </svg>
+  </span>
   <span class="brand"><i></i>Painting Loaders</span>
-  <span class="bar"><i></i></span>
 </div>
 
 <div class="topbar shell">
@@ -255,12 +311,14 @@
     <span class="esc">esc</span>
   </div>
   <div class="detail-body">
-    <div class="tile" id="detail-tile"></div>
-    <div class="detail-text">
-      <span class="eyebrow" id="detail-movement"></span>
-      <h2 class="display" id="detail-label"></h2>
-      <p id="detail-note"></p>
+    <div class="detail-stage">
+      <div class="tile" id="detail-tile"></div>
       <p class="status" id="detail-status" aria-live="polite"></p>
+    </div>
+    <div class="detail-text">
+      <h2 class="display" id="detail-label"></h2>
+      <span class="eyebrow" id="detail-movement"></span>
+      <p id="detail-note"></p>
       <button class="btn copy" id="detail-copy" type="button">
         <i data-icon="copy"></i><span class="copy-label">Copy code</span>
       </button>

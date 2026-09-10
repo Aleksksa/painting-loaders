@@ -36,6 +36,7 @@ standalone HTML file you can drop anywhere.
 | `engine.js` | `createEngine(styleConfig, opts)` — the reveal loop, plus the movement-agnostic helpers |
 | `style-*.js` | One movement each: its palette, its drawing vocabulary, and its stroke list |
 | `copycode.js` | Assembles a style's standalone file from the live functions via `toString()` |
+| `favicon.svg` | The painted bloom, also drawn in CSS as the boot overlay's loader |
 | `stills/*.webp` | The finished pictures, rendered ahead of time — what the grid shows at rest |
 | `tools/` | Re-render the stills; see below |
 

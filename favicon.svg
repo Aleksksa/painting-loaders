@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Painting Loaders">
+  <!-- A single painted bloom: six wet petals laid over one another on paper,
+       with a yellow heart dropped in last. Same palette as the gallery's
+       impressionist gardens (accents + highlights). -->
+  <rect width="64" height="64" rx="14" fill="#f5efe3"/>
+  <g transform="translate(32 32) scale(0.78)" style="mix-blend-mode:multiply">
+    <ellipse cx="0" cy="-2" rx="25" ry="23" fill="#f0bdd2" opacity="0.3"/>
+    <g opacity="0.88">
+      <path transform="rotate(2) scale(1.02 0.98)"    fill="#f4b3cb" d="M0 2C-9-3-13-11-12-18-11-25-5-30 0-29 6-30 12-25 12-18 13-10 8-4 0 2Z"/>
+      <path transform="rotate(61) scale(0.96 1.03)"   fill="#ea8fb4" d="M0 2C-9-3-13-11-12-18-11-25-5-30 0-29 6-30 12-25 12-18 13-10 8-4 0 2Z"/>
+      <path transform="rotate(119) scale(1.04 0.97)"  fill="#f4b3cb" d="M0 2C-9-3-13-11-12-18-11-25-5-30 0-29 6-30 12-25 12-18 13-10 8-4 0 2Z"/>
+      <path transform="rotate(178) scale(0.98 1.02)"  fill="#d8679a" d="M0 2C-9-3-13-11-12-18-11-25-5-30 0-29 6-30 12-25 12-18 13-10 8-4 0 2Z"/>
+      <path transform="rotate(241) scale(1.03 0.96)"  fill="#ea8fb4" d="M0 2C-9-3-13-11-12-18-11-25-5-30 0-29 6-30 12-25 12-18 13-10 8-4 0 2Z"/>
+      <path transform="rotate(300) scale(0.97 1.04)"  fill="#f4b3cb" d="M0 2C-9-3-13-11-12-18-11-25-5-30 0-29 6-30 12-25 12-18 13-10 8-4 0 2Z"/>
+    </g>
+    <ellipse cx="0" cy="-1" rx="7.4" ry="6.6" fill="#f7e0a4" opacity="0.95"/>
+  </g>
+</svg>
