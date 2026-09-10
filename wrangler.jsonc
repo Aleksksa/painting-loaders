@@ -7,7 +7,7 @@
   // ignores are .assetsignore, _redirects and _headers, so a root upload would
   // publish .git — the whole history — unless an ignore file caught it. A
   // directory that holds nothing but the site cannot leak by omission.
-  "name": "painting-loaders",
+  "name": "painterly",
   "compatibility_date": "2025-09-10",
   "assets": {
     "directory": "./public"
