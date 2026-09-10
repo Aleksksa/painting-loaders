@@ -7,11 +7,19 @@
  *  exactly what you just watched run. Only functions are serialised, so the
  *  two non-function bindings the engine relies on (W/H/m and the
  *  scaleBrushes once-only guard) are declared in the template by hand.
+ *
+ *  Only the functions the style actually reaches are emitted — see
+ *  reachableFrom(). A copied Willow used to carry the builders for all seven
+ *  Monet scenes, half the file being paint it never applies.
  * ===================================================================== */
 
+// Pinned, not floating: a copied file is meant to keep working untouched, and
+// `@latest` would hand it a p5.brush that has moved on. These are the versions
+// the gallery itself loads — keep the three in step (index.html,
+// tools/render-stills.html, here), or a copy stops matching what it painted.
 const CDN_TAGS =
-  '  <script src="https://cdn.jsdelivr.net/npm/p5@2/lib/p5.min.js"><\/script>\n' +
-  '  <script src="https://cdn.jsdelivr.net/npm/p5.brush@latest"><\/script>';
+  '  <script src="https://cdn.jsdelivr.net/npm/p5@2.3.3/lib/p5.min.js"><\/script>\n' +
+  '  <script src="https://cdn.jsdelivr.net/npm/p5.brush@2.2.2"><\/script>';
 
 // Function declarations serialise with their own name; arrow consts don't,
 // so those have to be re-bound explicitly.
@@ -20,8 +28,36 @@ function emitFn(fn) {
   return /^\s*(async\s+)?function\b/.test(src) ? src : `const ${fn.name} = ${src};`;
 }
 
+// The functions `seedNames` and `seedSources` reach, directly or through each
+// other, in `pool` order so a const is still declared before anything runs it.
+//
+// Names are matched literally in the source, which is the one rule the
+// vocabulary has to keep to: a function only ever reached through a name built
+// at runtime (`fns[key]()`) would look unused here and be dropped.
+function reachableFrom(pool, seedSources, seedNames) {
+  const byName = new Map(pool.map((fn) => [fn.name, fn]));
+  const kept = new Set(seedNames);
+  const queue = [...seedNames];
+  const scan = (src) => {
+    for (const name of byName.keys()) {
+      if (!kept.has(name) && new RegExp('\\b' + name + '\\b').test(src)) {
+        kept.add(name);
+        queue.push(name);
+      }
+    }
+  };
+  seedSources.forEach(scan);
+  while (queue.length) scan(byName.get(queue.shift()).toString());
+  return pool.filter((fn) => kept.has(fn.name));
+}
+
 function standaloneHTML(cfg) {
-  const fns = [...SHARED_FOR_COPY, ...cfg.vocabulary].map(emitFn).join('\n\n');
+  // The emitted page calls exactly two things: createEngine, and the style's
+  // own `strokes`. Everything else in the file is here because one of those
+  // two leads to it.
+  const pool = [...SHARED_FOR_COPY, ...cfg.vocabulary];
+  const fns = reachableFrom(pool, [cfg.strokes.toString()], ['createEngine'])
+    .map(emitFn).join('\n\n');
   return `<!DOCTYPE html>
 <html lang="en">
 <head>

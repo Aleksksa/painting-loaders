@@ -255,9 +255,14 @@
 
   <!-- All deferred: nothing here is needed to show the page, only to repaint a
        card on hover. Deferred scripts keep their order, and load order matters —
-       p5 first, then p5.brush, which registers itself as a p5 addon. -->
-  <script defer src="https://cdn.jsdelivr.net/npm/p5@2/lib/p5.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/p5.brush@latest"></script>
+       p5 first, then p5.brush, which registers itself as a p5 addon.
+
+       Both versions are pinned. The stills in public/stills/ were painted by
+       these exact ones, and a floating p5.brush that changed how a brush lays
+       down would leave every card's hover repaint disagreeing with the picture
+       it replaces. copycode.js emits the same pair. -->
+  <script defer src="https://cdn.jsdelivr.net/npm/p5@2.3.3/lib/p5.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/p5.brush@2.2.2"></script>
   <script defer src="engine.js"></script>
   <script defer src="style-impressionism.js"></script>
   <script defer src="style-abstraction.js"></script>
