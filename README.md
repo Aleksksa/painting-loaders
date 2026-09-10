@@ -2,8 +2,8 @@
 
 Loading states that paint themselves, in the manner of the movements that got there first.
 
-Nine loaders across three movements — seven Monet scenes, a Kandinsky-ish lyrical field, and a
-dusk abstraction. Each one is a real painting built stroke by stroke with
+Eight loaders across two movements — seven Monet scenes and a dusk abstraction. Each one is a
+real painting built stroke by stroke with
 [p5.brush](https://github.com/acamposuribe/p5.brush), not a video or a sprite sheet, so it is
 different every time it runs and it scales to any size.
 
