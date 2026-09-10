@@ -2,8 +2,8 @@
 
 Loading states that paint themselves, in the manner of the movements that got there first.
 
-Seven loaders across four movements — four Monet scenes, a Marc-ish blue horse, a Kandinsky-ish
-lyrical field, and a dusk abstraction. Each one is a real painting built stroke by stroke with
+Nine loaders across three movements — seven Monet scenes, a Kandinsky-ish lyrical field, and a
+dusk abstraction. Each one is a real painting built stroke by stroke with
 [p5.brush](https://github.com/acamposuribe/p5.brush), not a video or a sprite sheet, so it is
 different every time it runs and it scales to any size.
 
@@ -24,6 +24,9 @@ clipboard as a single standalone HTML file you can drop anywhere.
 | `engine.js` | `createEngine(styleConfig, opts)` — the reveal loop, plus the movement-agnostic helpers |
 | `style-*.js` | One movement each: its palette, its drawing vocabulary, and its stroke list |
 | `copycode.js` | Assembles a style's standalone file from the live functions via `toString()` |
+
+`style-expressionism.js` is in the repo but not in the gallery's lineup — add a `<script>` tag
+for it and `STYLES.expressionism` to the `GALLERY` array in `gallery.html` to put it back.
 
 There is exactly **one** live canvas on the page. It gets moved into whichever tile is painting
 and parks in a hidden staging div the rest of the time; every other card shows a flat still it
