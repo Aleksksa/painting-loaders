@@ -79,10 +79,10 @@
     }
     .shell { max-width: 1240px; width: 100%; margin: 0 auto; padding-inline: clamp(20px, 3.5vw, 48px); }
 
-    /* ---- top bar ---- */
-    .topbar { position: relative; display: flex; align-items: center; justify-content: center; padding-block: 26px; }
-    .brand { display: flex; align-items: center; gap: 9px; font: 500 12px/1 var(--body); letter-spacing: 0.2em; text-transform: uppercase; }
-    .brand i { width: 13px; height: 13px; border-radius: 3px; background: var(--accent); display: block; }
+    /* ---- top bar ----
+       Nothing but the theme toggle lives up here: the paintings introduce the
+       page better than a wordmark would. */
+    .topbar { display: flex; align-items: center; justify-content: flex-end; padding-block: 26px; }
 
     button { font: inherit; color: inherit; cursor: pointer; }
     .btn {
@@ -97,10 +97,9 @@
     .btn.quiet:hover { color: var(--ink); }
 
     .theme-toggle {
-      position: absolute; right: clamp(20px, 3.5vw, 48px); top: 50%; transform: translateY(-50%);
       width: 34px; height: 34px; padding: 0; border: none; background: transparent; color: var(--soft);
     }
-    .theme-toggle:hover { background: transparent; border: none; color: var(--ink); transform: translateY(-50%); }
+    .theme-toggle:hover { background: transparent; border: none; color: var(--ink); }
 
     /* ---- header ---- */
     header { padding-top: 64px; display: flex; flex-direction: column; gap: 20px; align-items: center; text-align: center; }
@@ -195,6 +194,24 @@
     #detail .copy { margin-top: 14px; flex: none; background: var(--sunk); padding: 14px 24px; font-size: 14px; }
     #detail .copy:hover { transform: translateY(-1px); }
 
+    /* Step through the gallery without going back to it. The arrow keys do the
+       same thing; these put it where the cursor already is, on either edge. */
+    .detail-nav {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      width: 52px; height: 52px; flex: none; padding: 0;
+      border-radius: 50%; color: var(--soft);
+    }
+    .detail-nav:hover { color: var(--ink); }
+    #detail-prev { left: clamp(12px, 3.5vw, 48px); }
+    #detail-next { right: clamp(12px, 3.5vw, 48px); }
+
+    /* On a narrow screen the arrows would sit on top of the painting, so the
+       painting gives up the width instead. */
+    @media (max-width: 640px) {
+      #detail-tile { width: min(36vh, 440px, 62vw); }
+      .detail-nav { width: 44px; height: 44px; }
+    }
+
     /* ---- boot ----
        The wait is a painting too: six petals land one after another, a yellow
        heart drops in last, and the whole bloom washes out and starts again. */
@@ -223,7 +240,6 @@
       transition: opacity 400ms ease;
     }
     #boot.gone { opacity: 0; pointer-events: none; }
-    #boot .brand { color: var(--soft); }
     #boot .bloom svg { display: block; overflow: visible; }
     /* Wet paint over paper. On the dark theme there is no paper to soak into,
        so the pastels are left to sit on top of it instead. */
@@ -286,11 +302,9 @@
       <ellipse class="heart" style="--i:6" cx="0" cy="-1" rx="7.4" ry="6.6"/>
     </svg>
   </span>
-  <span class="brand"><i></i>Painting Loaders</span>
 </div>
 
 <div class="topbar shell">
-  <span class="brand"><i></i>Painting Loaders</span>
   <button class="btn theme-toggle" id="theme" type="button" aria-label="Switch theme"></button>
 </div>
 
@@ -304,7 +318,7 @@
 <footer>
   <div class="footer-inner shell">
     <span>© 2026 Painting Loaders</span>
-    <span>Built by <a href="#">Sasha</a></span>
+    <span>Built by <a href="https://x.com/aleksksaa" target="_blank" rel="noopener noreferrer">Sasha</a></span>
   </div>
 </footer>
 
@@ -315,6 +329,12 @@
     </button>
     <span class="esc">esc</span>
   </div>
+  <button class="btn detail-nav" id="detail-prev" type="button" aria-label="Previous painting">
+    <i data-icon="chevron-left" data-size="22"></i>
+  </button>
+  <button class="btn detail-nav" id="detail-next" type="button" aria-label="Next painting">
+    <i data-icon="chevron-right" data-size="22"></i>
+  </button>
   <div class="detail-body">
     <div class="detail-stage">
       <div class="tile" id="detail-tile"></div>

@@ -35,6 +35,10 @@ npx wrangler deploy
 Connecting the repo in the Cloudflare dashboard does the same thing on every push: leave the
 build command empty and keep `npx wrangler deploy` as the deploy command.
 
+`name` in `wrangler.jsonc` has to match the Worker it belongs to. Dashboard builds deploy to the
+connected Worker whatever the file says, but a local `wrangler deploy` believes the file — a name
+that matches nothing uploads a second Worker at its own URL and leaves the real site untouched.
+
 One caveat: the page loads `engine.js` and the style files as ordinary relative scripts, so it
 needs a real page URL. Editor and IDE preview panes that inline the HTML into a `data:` URL
 cannot resolve those paths — you get the layout with empty tiles and no paintings. Open the file
@@ -43,6 +47,10 @@ in a browser, or serve it, and it works.
 The grid shows the finished pictures immediately. Hover a painting to watch it painted again;
 click it to open it full screen; **Copy code** puts that loader on your clipboard as a single
 standalone HTML file you can drop anywhere.
+
+Full screen, the arrows on either edge — or the left and right arrow keys — move to the next
+painting and wrap around at both ends, so the whole gallery can be watched without going back to
+the grid. `Esc` returns to it.
 
 ## How it fits together
 
