@@ -1,0 +1,10 @@
+{
+  // Static assets only — there is no Worker script. Everything in the repo root
+  // is uploaded as-is and served straight from Cloudflare's edge; `index.html`
+  // is what "/" resolves to. See .assetsignore for what stays behind.
+  "name": "painting-loaders",
+  "compatibility_date": "2025-09-10",
+  "assets": {
+    "directory": "."
+  }
+}

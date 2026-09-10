@@ -9,7 +9,7 @@ different every time it runs and it scales to any size.
 
 ## Run it
 
-Open `gallery.html` in a browser. That's it — no build step, no install. p5 and p5.brush come
+Open `index.html` in a browser. That's it — no build step, no install. p5 and p5.brush come
 from a CDN, so the page needs a network connection the first time.
 
 If you'd rather serve it, any static server will do:
@@ -17,6 +17,19 @@ If you'd rather serve it, any static server will do:
 ```
 python3 -m http.server 8000
 ```
+
+## Deploy it
+
+The site is static, so Cloudflare Workers serves it with no build step and no Worker script —
+`wrangler.jsonc` points the asset uploader at the repo root and `.assetsignore` holds back the
+files that aren't part of the site.
+
+```
+npx wrangler deploy
+```
+
+Connecting the repo in the Cloudflare dashboard does the same thing on every push: leave the
+build command empty and keep `npx wrangler deploy` as the deploy command.
 
 One caveat: the page loads `engine.js` and the style files as ordinary relative scripts, so it
 needs a real page URL. Editor and IDE preview panes that inline the HTML into a `data:` URL
@@ -31,12 +44,13 @@ standalone HTML file you can drop anywhere.
 
 | File | What it is |
 | --- | --- |
-| `gallery.html` | The page itself: markup, design tokens, layout |
+| `index.html` | The page itself: markup, design tokens, layout |
 | `gallery.js` | Cards, hover replay, the full-screen view, theme, the boot overlay |
 | `engine.js` | `createEngine(styleConfig, opts)` — the reveal loop, plus the movement-agnostic helpers |
 | `style-*.js` | One movement each: its palette, its drawing vocabulary, and its stroke list |
 | `copycode.js` | Assembles a style's standalone file from the live functions via `toString()` |
 | `favicon.svg` | The painted bloom, also drawn in CSS as the boot overlay's loader |
+| `wrangler.jsonc` | Cloudflare Workers config — assets only, no Worker script |
 | `stills/*.webp` | The finished pictures, rendered ahead of time — what the grid shows at rest |
 | `tools/` | Re-render the stills; see below |
 
@@ -92,7 +106,7 @@ STYLES.myMovement = {
 };
 ```
 
-Then add a `<script>` tag for it in `gallery.html` and one entry to the `GALLERY` array. Wrap the
+Then add a `<script>` tag for it in `index.html` and one entry to the `GALLERY` array. Wrap the
 file in an IIFE so movements can reuse names like `drawFlower` without colliding.
 
 Three rules the Copy code assembler imposes, all of which fail loudly if broken:
@@ -109,7 +123,7 @@ the shared brush registry in place and is therefore once-per-page.
 
 ## Theming
 
-Design tokens live in the `:root` block at the top of `gallery.html` — `--paper`, `--sunk`,
+Design tokens live in the `:root` block at the top of `index.html` — `--paper`, `--sunk`,
 `--ink`, `--soft`, `--line`, `--accent`, plus the display type variables. Dark values sit in
 `[data-theme="dark"]`. Five alternate typeface pairings are kept as a commented block right
 below the tokens; swapping one in (and adding its family to the fonts link) re-voices the whole

@@ -6,7 +6,7 @@
  *  reuse names like drawFlower without colliding, and reads W / H / m from
  *  engine.js at call time (never captured at load time).
  *
- *  Exports four sibling configs sharing one vocabulary. gallery.html shows
+ *  Exports four sibling configs sharing one vocabulary. index.html shows
  *  garden as the Impressionism card; loader.html rotates all four.
  * ===================================================================== */
 window.STYLES = window.STYLES || {};

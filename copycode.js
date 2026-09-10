@@ -1,5 +1,5 @@
 /* =====================================================================
- *  copycode.js — "Copy code" and "Copy settings", shared by gallery.html
+ *  copycode.js — "Copy code" and "Copy settings", shared by index.html
  *  and playground-lyrical.html.
  *
  *  standaloneHTML(cfg) assembles a style's full standalone file from the

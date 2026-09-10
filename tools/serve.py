@@ -6,7 +6,7 @@ can write the pre-rendered stills straight back into the repo.
 
 PUT is deliberately narrow: only paths under stills/, only .webp, no traversal.
 Nothing else about this server is special — for just looking at the gallery,
-any static server (or opening gallery.html directly) works fine.
+any static server (or opening index.html directly) works fine.
 """
 import functools
 import http.server

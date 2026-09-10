@@ -1,0 +1,9 @@
+# Repo furniture — not part of the site. Everything else in the root (the page,
+# the engine, the styles and stills/) ships.
+README.md
+tools/
+wrangler.jsonc
+.assetsignore
+.gitignore
+.git/
+.claude/
