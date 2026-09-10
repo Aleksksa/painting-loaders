@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Render stills</title>
+  <style>
+    body { margin: 0; padding: 40px 24px; background: #f7f4ee; color: #1b1a17;
+           font: 14px/1.6 system-ui, -apple-system, sans-serif; }
+    main { max-width: 640px; margin: 0 auto; }
+    h1 { font-size: 20px; margin: 0 0 4px; }
+    p { color: #6f6a60; margin: 0 0 24px; }
+    button { font: inherit; padding: 10px 18px; border: 1px solid rgba(27,26,23,.2);
+             border-radius: 8px; background: #fff; cursor: pointer; }
+    button[disabled] { opacity: .5; cursor: default; }
+    ol { padding-left: 20px; }
+    li { margin: 3px 0; }
+    li.done { color: #2e7d32; }
+    li.fail { color: #c2542a; }
+    #sheet { margin-top: 24px; width: 300px; height: 300px; }
+    #sheet canvas { width: 100% !important; height: 100% !important; display: block; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/p5@2/lib/p5.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/p5.brush@latest"></script>
+  <script src="../engine.js"></script>
+  <script src="../style-impressionism.js"></script>
+  <script src="../style-abstraction.js"></script>
+</head>
+<body>
+<main>
+  <h1>Render stills</h1>
+  <p>Paints every style to completion and PUTs it to <code>stills/&lt;key&gt;.webp</code>.
+     Takes about 90 seconds — one full painting per style, by definition.</p>
+  <p><strong>Keep this tab in the foreground.</strong> A backgrounded tab is throttled to zero
+     frames and the render silently stops making progress. Headless Chrome is not a shortcut
+     either: SwiftShader runs minutes per still and can hang on a dense scene.</p>
+  <button id="go" type="button">Render all</button>
+  <ol id="log"></ol>
+  <div id="sheet"></div>
+</main>
+
+<script>
+  // Keep this list in step with GALLERY in gallery.html.
+  const GALLERY = [
+    STYLES.impressionismGarden, STYLES.impressionismDawn,
+    STYLES.impressionismWillow, STYLES.impressionismWisteria,
+    STYLES.impressionismOrchard, STYLES.impressionismIrises,
+    STYLES.impressionismPoppies,
+    STYLES.abstractionDusk,
+  ];
+
+  const QUALITY = 0.9;   // 18-49 KB per still at 560px; PNG would be ~600 KB each
+  const OUT = 560;       // matches the <img> backing size the gallery asks for
+
+  const log = document.getElementById('log');
+  const go = document.getElementById('go');
+  let engine = null;
+
+  const line = (text) => { const li = document.createElement('li'); li.textContent = text; log.appendChild(li); return li; };
+  const frame = () => new Promise((r) => requestAnimationFrame(() => r()));
+
+  // The engine paints incrementally, so walk t up over several frames rather than
+  // asking for the whole picture in one blocking call.
+  async function paint(cfg) {
+    engine.load(cfg);
+    const SLICES = 6;
+    for (let i = 1; i <= SLICES; i++) {
+      engine.renderTo((cfg.loopMs / SLICES) * i);
+      await frame();
+    }
+  }
+
+  function encode(cfg) {
+    const out = document.createElement('canvas');
+    out.width = OUT; out.height = OUT;
+    out.getContext('2d').drawImage(engine.canvas, 0, 0, OUT, OUT);
+    return out.toDataURL('image/webp', QUALITY);
+  }
+
+  async function put(key, dataUrl) {
+    const blob = await fetch(dataUrl).then((r) => r.blob());
+    const res = await fetch('../stills/' + key + '.webp', { method: 'PUT', body: blob });
+    if (!res.ok) throw new Error('PUT failed: ' + res.status + ' — is tools/serve.py running?');
+    return blob.size;
+  }
+
+  go.addEventListener('click', async () => {
+    go.disabled = true;
+    log.innerHTML = '';
+    for (const cfg of GALLERY) {
+      const li = line(cfg.label + ' …');
+      try {
+        await paint(cfg);
+        const bytes = await put(cfg.key, encode(cfg));
+        li.textContent = cfg.label + ' — ' + Math.round(bytes / 1024) + ' KB';
+        li.className = 'done';
+      } catch (err) {
+        li.textContent = cfg.label + ' — ' + err.message;
+        li.className = 'fail';
+      }
+    }
+    line('done');
+    go.disabled = false;
+  });
+
+  function setup() {
+    engine = createEngine(GALLERY[0], { mount: document.getElementById('sheet') });
+    engine.setup();
+    noLoop();
+  }
+  function draw() {}
+</script>
+</body>
+</html>

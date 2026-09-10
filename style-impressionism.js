@@ -702,24 +702,24 @@ window.STYLES = window.STYLES || {};
   });
 
   STYLES.impressionismGarden = scene('garden', 'Impressionism · Garden',
-    'Broken colour laid wet into wet — the border only settles when you stop looking straight at it.',
+    'Warm and a little too much, in the best way.',
     (palette) => buildGarden(palette));
   STYLES.impressionismDawn = scene('dawn', 'Impressionism · Dawn',
-    'First light on still water: the reeds go in dark, the lilies are opened last.',
+    'Quiet, like nothing has happened yet.',
     (palette) => buildDawn(palette));
   STYLES.impressionismWillow = scene('willow', 'Impressionism · Willow',
-    'The water is finished before anything stands in it, then the willow is hung over the top.',
+    'Cool and wistful, the kind of quiet you don’t want to leave.',
     (palette) => buildWillow(palette));
   STYLES.impressionismWisteria = scene('wisteria', 'Impressionism · Wisteria',
-    'A dappled meadow, racemes hung from above, blossom scattered last — depth by layering, never by drawing.',
+    'Delicate in a way that already feels like a memory.',
     (palette) => buildWisteria(palette));
   STYLES.impressionismPoppies = scene('poppies', 'Impressionism · Poppies',
-    'A drift of red walking downhill toward you, wetter and larger than its neighbours so the blooms keep a soft edge.',
+    'Red that refuses to be background.',
     (palette) => buildPoppies(palette));
   STYLES.impressionismIrises = scene('irises', 'Impressionism · Irises',
-    'A path narrowing to a point, beds either side, and blades that keep off it so the perspective holds.',
+    'Purple standing at attention, politely.',
     (palette) => buildIrises(palette));
   STYLES.impressionismOrchard = scene('orchard', 'Impressionism · Orchard',
-    'Trunks first, then the blossom hung over them as cloud and dapple — the tree is built before it flowers.',
+    'Light and a little giddy, spring before it’s sure of itself.',
     (palette) => buildOrchard(palette));
 })();

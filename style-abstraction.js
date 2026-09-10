@@ -225,7 +225,7 @@ window.STYLES = window.STYLES || {};
   STYLES.abstractionDusk = {
     key: 'abstraction-dusk',
     movement: 'Abstraction',
-    note: 'Wide stains for the ground, glazes over them, flicks last — colour arranged as architecture.',
+    note: 'The hour when color stops trying to be anything specific.',
     label: 'Abstraction · Dusk',
     canvasSize: 600,
     loopMs: 9000,

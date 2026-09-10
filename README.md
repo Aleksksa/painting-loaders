@@ -23,23 +23,53 @@ needs a real page URL. Editor and IDE preview panes that inline the HTML into a 
 cannot resolve those paths — you get the layout with empty tiles and no paintings. Open the file
 in a browser, or serve it, and it works.
 
-The grid paints itself in on load and then holds the finished pictures. Hover a painting to
-watch it painted again; click it to open it full screen; **Copy code** puts that loader on your
-clipboard as a single standalone HTML file you can drop anywhere.
+The grid shows the finished pictures immediately. Hover a painting to watch it painted again;
+click it to open it full screen; **Copy code** puts that loader on your clipboard as a single
+standalone HTML file you can drop anywhere.
 
 ## How it fits together
 
 | File | What it is |
 | --- | --- |
-| `gallery.html` | The page: layout, theme, the detail view, and the one canvas everything shares |
+| `gallery.html` | The page itself: markup, design tokens, layout |
+| `gallery.js` | Cards, hover replay, the full-screen view, theme, the boot overlay |
 | `engine.js` | `createEngine(styleConfig, opts)` — the reveal loop, plus the movement-agnostic helpers |
 | `style-*.js` | One movement each: its palette, its drawing vocabulary, and its stroke list |
 | `copycode.js` | Assembles a style's standalone file from the live functions via `toString()` |
+| `stills/*.webp` | The finished pictures, rendered ahead of time — what the grid shows at rest |
+| `tools/` | Re-render the stills; see below |
 
 There is exactly **one** live canvas on the page. It gets moved into whichever tile is painting
-and parks in a hidden staging div the rest of the time; every other card shows a flat still it
-painted at load. That is why a grid of seven paintings costs nothing while you are not looking
-at it.
+and parks in a hidden staging div the rest of the time.
+
+**Nothing paints at load.** A painting costs about ten seconds of p5.brush fills — `loopMs` is
+9000, so that is the intended speed, not a bug — and computing eight of them up front froze the
+page for a minute and a half. The finished pictures ship as WebP instead (276 KB for all eight),
+and the engine only runs when someone asks to watch one being painted. Every scene uses a fixed
+seed, so a shipped still is the same picture a live repaint produces.
+
+## Rendering the stills
+
+Any time a style's strokes, palette or dials change, its still is stale and has to be re-rendered:
+
+```
+python3 tools/serve.py
+```
+
+then open `http://localhost:8000/tools/render-stills.html` and press **Render all**. It paints
+every style and writes `stills/<key>.webp` back into the repo through the server's `PUT` handler
+(which only ever accepts `.webp` under `stills/`). It takes about 90 seconds — one full painting
+per style, by definition.
+
+Two things that will waste your afternoon otherwise:
+
+- **Keep the tab in the foreground.** A backgrounded tab is throttled to zero frames and the
+  render silently stops making progress.
+- **Headless is not a shortcut.** Under SwiftShader a single 600px still takes minutes and a
+  dense scene can hang outright.
+
+GPU rasterisation is not bit-exact, so re-rendering rewrites all eight files even when nothing
+changed. The pictures are identical; the bytes are not. Commit only the ones you meant to change.
 
 ### Adding a movement
 
