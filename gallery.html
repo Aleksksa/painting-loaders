@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painting Loaders</title>
+
+  <!-- Theme before first paint, so a dark reload never flashes light. The OS is
+       only the opening guess; once you press the toggle, your choice wins. -->
+  <script>
+    (function () {
+      let saved = null;
+      try { saved = localStorage.getItem('pl-theme'); } catch (e) {}
+      document.documentElement.dataset.theme =
+        saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600&family=Jost:wght@300;400;500&display=swap">
+
+  <style>
+    :root {
+      --paper: #f7f4ee;
+      --sunk: #efebe2;
+      --ink: #1b1a17;
+      --soft: #6f6a60;
+      --line: rgba(27, 26, 23, 0.12);
+      --shadow: 0 1px 2px rgba(27, 26, 23, 0.04), 0 12px 32px -18px rgba(27, 26, 23, 0.2);
+      --accent: #c2542a;
+      --r: 10px;   /* tiles */
+      --rb: 10px;  /* buttons */
+
+      /* Typeface pair. See the alternates below. */
+      --display: 'Newsreader', Georgia, serif;
+      --body: 'Jost', system-ui, sans-serif;
+      --dw: 500;      /* display weight */
+      --dls: -0.01em; /* display letter-spacing */
+      --dtt: none;    /* display text-transform */
+      --dlh: 1.06;    /* display line-height */
+
+      /* Card captions stay out of the display face on purpose — the paintings
+         carry the character, the labels just name them. */
+      --caption: system-ui, -apple-system, 'Geist', 'Segoe UI', Roboto, sans-serif;
+    }
+
+    /* Alternate pairings from the design. Swap one of these into :root — and add
+       the family to the fonts link above — to re-voice the whole page.
+       grotesk:  --display:'Space Grotesk',system-ui,sans-serif; --body:'Karla',system-ui,sans-serif; --dw:500; --dls:-.035em; --dlh:1;
+       quiet:    --display:'Jost',system-ui,sans-serif;          --body:'Jost',system-ui,sans-serif;  --dw:300; --dls:.01em;  --dlh:1.08;
+       editorial:--display:'Instrument Serif',Georgia,serif;     --body:'Karla',system-ui,sans-serif; --dw:400; --dls:-.015em;--dlh:1.02;
+       didone:   --display:'Bodoni Moda',Didot,serif;            --body:'Karla',system-ui,sans-serif; --dw:400; --dls:-.01em; --dlh:1.08;
+       mono:     --display:'JetBrains Mono',monospace;           --body:'Karla',system-ui,sans-serif; --dw:400; --dls:-.04em; --dlh:1.12;
+       stencil:  --display:'Jost',system-ui,sans-serif;          --body:'Karla',system-ui,sans-serif; --dw:500; --dls:.14em;  --dtt:uppercase; --dlh:1.14; */
+
+    [data-theme="dark"] {
+      --paper: #0a0a0a;
+      --sunk: #161616;
+      --ink: #f2eee5;
+      --soft: #8b867d;
+      --line: rgba(242, 238, 229, 0.12);
+      --accent: #e0763f;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 18px 44px -22px rgba(0, 0, 0, 0.8);
+    }
+
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    html, body { margin: 0; background: var(--paper); }
+    body {
+      min-height: 100vh; display: flex; flex-direction: column;
+      color: var(--ink); font-family: var(--body);
+      -webkit-font-smoothing: antialiased;
+      transition: background 350ms ease, color 350ms ease;
+    }
+    .display {
+      font-family: var(--display); font-weight: var(--dw);
+      letter-spacing: var(--dls); text-transform: var(--dtt); line-height: var(--dlh);
+    }
+    .shell { max-width: 1240px; width: 100%; margin: 0 auto; padding-inline: clamp(20px, 3.5vw, 48px); }
+
+    /* ---- top bar ---- */
+    .topbar { position: relative; display: flex; align-items: center; justify-content: center; padding-block: 26px; }
+    .brand { display: flex; align-items: center; gap: 9px; font: 500 12px/1 var(--body); letter-spacing: 0.2em; text-transform: uppercase; }
+    .brand i { width: 13px; height: 13px; border-radius: 3px; background: var(--accent); display: block; }
+
+    button { font: inherit; color: inherit; cursor: pointer; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+      border: 1px solid var(--line); border-radius: var(--rb); background: transparent;
+      color: var(--ink); font: 500 13px/1 var(--body); padding: 12px 16px;
+      transition: background 200ms ease, border-color 200ms ease, color 200ms ease, transform 200ms ease;
+    }
+    .btn:hover { background: var(--sunk); border-color: var(--soft); }
+    .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .btn.quiet { color: var(--soft); font-size: 12px; padding: 9px 15px 9px 11px; }
+    .btn.quiet:hover { color: var(--ink); }
+
+    .theme-toggle {
+      position: absolute; right: clamp(20px, 3.5vw, 48px); top: 50%; transform: translateY(-50%);
+      width: 34px; height: 34px; padding: 0; border: none; background: transparent; color: var(--soft);
+    }
+    .theme-toggle:hover { background: transparent; border: none; color: var(--ink); transform: translateY(-50%); }
+
+    /* ---- header ---- */
+    header { padding-top: 64px; display: flex; flex-direction: column; gap: 20px; align-items: center; text-align: center; }
+    h1 { margin: 0; max-width: 16ch; font-size: clamp(42px, 5.4vw, 76px); text-wrap: balance; }
+    header p { margin: 0; max-width: 54ch; font: 400 17px/1.65 var(--body); color: var(--soft); text-wrap: pretty; }
+
+    /* ---- grid ---- */
+    .grid {
+      padding-block: 64px 96px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 40px 24px;
+    }
+    .card { display: flex; flex-direction: column; gap: 14px; }
+
+    /* The tile is a fluid square. The live canvas is 600x600 internally and is
+       scaled down by CSS, so the brushwork is identical to the standalone file.
+       --ground is set per card to that style's paper colour, so a tile looks
+       like the painting it is about to hold before a stroke has landed. */
+    .tile {
+      position: relative; aspect-ratio: 1; overflow: hidden; cursor: pointer;
+      border: 1px solid var(--line); border-radius: var(--r);
+      background: var(--ground, var(--sunk)); box-shadow: var(--shadow);
+      transition: transform 200ms ease, border-color 200ms ease;
+    }
+    .card:hover .tile, .card:focus-within .tile { transform: translateY(-2px); }
+    .tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    .tile canvas { display: block; position: absolute; inset: 0; width: 100% !important; height: 100% !important; }
+    /* The finished painting, rendered once at load and then left alone. */
+    .still { z-index: 0; }
+    /* The one live canvas layers over the still while this card is painting. */
+    .tile canvas:not(.still) { z-index: 1; }
+    /* Where the live canvas waits while nothing is painting. */
+    #staging { position: fixed; left: -9999px; top: 0; width: 1px; height: 1px; overflow: hidden; }
+
+    .card h2 { margin: 0; font: 500 16px/1.3 var(--caption); letter-spacing: -0.01em; }
+    .status { font: 400 13px/1.3 var(--body); color: var(--soft); min-height: 1.3em; transition: opacity 250ms ease; }
+    .status.fade { opacity: 0; }
+    .actions { display: flex; gap: 8px; margin-top: auto; }
+    .copy { flex: 1; }
+    .expand { width: 42px; height: 42px; flex: none; padding: 0; color: var(--soft); }
+    .expand:hover { color: var(--ink); }
+
+    /* ---- footer ---- */
+    footer { margin-top: auto; border-top: 1px solid var(--line); }
+    .footer-inner {
+      padding-block: 26px; display: flex; flex-wrap: wrap; gap: 14px;
+      align-items: center; justify-content: space-between;
+      font: 400 13px/1.4 var(--body); color: var(--soft);
+    }
+    footer a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--line); padding-bottom: 2px; }
+    footer a:hover { color: var(--accent); }
+
+    /* ---- detail view ---- */
+    @keyframes pl-fade { from { opacity: 0 } to { opacity: 1 } }
+    @keyframes pl-rise { from { opacity: 0; transform: translateY(14px) } to { opacity: 1; transform: none } }
+
+    #detail {
+      position: fixed; inset: 0; z-index: 40; background: var(--paper);
+      display: flex; flex-direction: column; overflow: auto;
+      animation: pl-fade 400ms cubic-bezier(.2,.7,.3,1) both;
+    }
+    .detail-bar { display: flex; align-items: center; justify-content: space-between; padding: 26px clamp(20px, 3.5vw, 48px); }
+    .esc { font: 400 11px/1 var(--body); letter-spacing: 0.14em; text-transform: uppercase; color: var(--soft); }
+    .detail-body {
+      flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: clamp(20px, 4vh, 38px); padding: 0 clamp(20px, 3.5vw, 48px) 40px;
+    }
+    #detail-tile {
+      width: min(36vh, 440px, 80vw); flex: none; cursor: default;
+      border-radius: calc(var(--r) + 4px);
+      animation: pl-rise 550ms cubic-bezier(.2,.7,.3,1) both;
+    }
+    #detail-tile:hover { transform: none; border-color: var(--line); }
+    .detail-text {
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+      text-align: center; max-width: 46ch;
+      animation: pl-rise 550ms 80ms cubic-bezier(.2,.7,.3,1) both;
+    }
+    .eyebrow { font: 500 11px/1 var(--body); letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); }
+    .detail-text h2 { margin: 0; font-size: clamp(30px, 3.4vw, 46px); }
+    .eyebrow:not([hidden]) + h2 { margin-top: -4px; }
+    .detail-text p { margin: 0; font: 400 15px/1.6 var(--body); color: var(--soft); text-wrap: pretty; }
+    #detail-status { min-height: 1.3em; }
+    #detail .copy { margin-top: 14px; flex: none; background: var(--sunk); padding: 14px 24px; font-size: 14px; }
+    #detail .copy:hover { transform: translateY(-1px); }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; }
+      .card:hover .tile, .card:focus-within .tile, #detail .copy:hover { transform: none; }
+      body, .btn, .tile, .status { transition: none; }
+    }
+  </style>
+
+  <!-- Load order matters: p5 first, then p5.brush (it registers itself as a p5 addon). -->
+  <script src="https://cdn.jsdelivr.net/npm/p5@2/lib/p5.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/p5.brush@latest"></script>
+  <script src="engine.js"></script>
+  <script src="style-impressionism.js"></script>
+  <script src="style-expressionism.js"></script>
+  <script src="style-lyrical.js"></script>
+  <script src="style-abstraction.js"></script>
+  <script src="copycode.js"></script>
+</head>
+<body>
+
+<div class="topbar shell">
+  <span class="brand"><i></i>Painting Loaders</span>
+  <button class="btn theme-toggle" id="theme" type="button" aria-label="Switch theme"></button>
+</div>
+
+<header class="shell">
+  <h1 class="display">Waiting, but make it a painting.</h1>
+  <p>Loading states that paint themselves, in the manner of the movements that got there first.
+     Hover a canvas to watch it painted again — one paints at a time. Expand any of them, or copy
+     it out as a single standalone HTML file.</p>
+</header>
+
+<main class="grid shell" id="grid"></main>
+
+<footer>
+  <div class="footer-inner shell">
+    <span>© 2026 Painting Loaders</span>
+    <span>Built by <a href="#">Sasha</a></span>
+  </div>
+</footer>
+
+<div id="detail" hidden>
+  <div class="detail-bar">
+    <button class="btn quiet" id="detail-back" type="button">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>Back to gallery
+    </button>
+    <span class="esc">esc</span>
+  </div>
+  <div class="detail-body">
+    <div class="tile" id="detail-tile"></div>
+    <div class="detail-text">
+      <span class="eyebrow" id="detail-movement"></span>
+      <h2 class="display" id="detail-label"></h2>
+      <p id="detail-note"></p>
+      <p class="status" id="detail-status" aria-live="polite"></p>
+      <button class="btn copy" id="detail-copy" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="14" height="14" rx="3"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg><span class="copy-label">Copy code</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="staging" aria-hidden="true"></div>
+
+<script>
+  // The gallery's styles, in display order. Adding a movement is one entry here
+  // plus its own style-*.js in the head.
+  const GALLERY = [
+    STYLES.impressionismGarden, STYLES.impressionismDawn,
+    STYLES.impressionismWillow, STYLES.impressionismWisteria,
+    STYLES.expressionism,
+    STYLES.lyrical,
+    STYLES.abstractionDusk,
+  ];
+
+  // =====================================================================
+  //  Theme. The opening value is already on <html> (see the head script);
+  //  this only labels the button and handles presses.
+  // =====================================================================
+  const themeBtn = document.getElementById('theme');
+  const SUN = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2m-7.07-15.07 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2m-15.66 5.66-1.41 1.41m14.14-14.14-1.41 1.41"></path></svg>';
+  const MOON = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>';
+
+  function paintThemeButton() {
+    const dark = document.documentElement.dataset.theme === 'dark';
+    themeBtn.innerHTML = dark ? SUN : MOON;
+    themeBtn.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
+  }
+  themeBtn.addEventListener('click', () => {
+    const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem('pl-theme', next); } catch (e) {}
+    paintThemeButton();
+  });
+  paintThemeButton();
+
+  // =====================================================================
+  //  Cards. One engine and one live canvas, moved into whichever tile is
+  //  painting; every other card shows the flat still it painted at load.
+  // =====================================================================
+  const COPY_ICON =
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="14" height="14" rx="3"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg>';
+  const EXPAND_ICON =
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path></svg>';
+
+  const grid = document.getElementById('grid');
+  const staging = document.getElementById('staging');
+
+  const cards = GALLERY.map((cfg) => {
+    const card = document.createElement('article');
+    card.className = 'card';
+    card.innerHTML =
+      `<div class="tile" tabindex="0" role="button" aria-label="Open ${cfg.label} full screen">
+         <canvas class="still" width="560" height="560"></canvas>
+       </div>
+       <h2></h2>
+       <div class="actions">
+         <button class="btn copy" type="button">${COPY_ICON}<span class="copy-label">Copy code</span></button>
+         <button class="btn expand" type="button" aria-label="Open ${cfg.label} full screen">${EXPAND_ICON}</button>
+       </div>`;
+    card.querySelector('h2').textContent = cfg.label;
+    const tile = card.querySelector('.tile');
+    tile.style.setProperty('--ground', cfg.palette.ground);  // shows until this card has been painted
+    // copyText() flashes textContent, so hand it the label span and leave the icon alone.
+    card.querySelector('.copy').addEventListener('click', (e) =>
+      copyCode(cfg, e.currentTarget.querySelector('.copy-label')));
+    grid.appendChild(card);
+    return {
+      cfg, card, tile,
+      still: card.querySelector('.still'),
+      expandBtn: card.querySelector('.expand'),
+    };
+  });
+
+  let engine = null;
+  let activeIndex = -1;
+  let detailIndex = -1;
+  let hoverTimer = null;
+
+  // =====================================================================
+  //  Priming. There is one canvas, so the stills have to be painted one at a
+  //  time. Each painting is advanced in a few slices per frame rather than all
+  //  at once, so the page stays responsive and the grid visibly paints itself
+  //  in on first load.
+  // =====================================================================
+  const PRIME_SLICES = 6;
+  let primeIndex = 0, primeT = 0;
+  const priming = () => primeIndex < cards.length;
+
+  // Copy the finished frame into this card's own 2D canvas. Done in the same
+  // frame as the last stroke, so the WEBGL back buffer is still intact — no
+  // toDataURL and no preserveDrawingBuffer assumption.
+  function captureStill(c) {
+    const ctx = c.still.getContext('2d');
+    ctx.clearRect(0, 0, c.still.width, c.still.height);
+    ctx.drawImage(engine.canvas, 0, 0, c.still.width, c.still.height);
+  }
+
+  function primeStep() {
+    const c = cards[primeIndex];
+    if (primeT === 0) {
+      engine.mount(c.tile);
+      engine.load(c.cfg);
+    }
+    primeT = Math.min(primeT + c.cfg.loopMs / PRIME_SLICES, c.cfg.loopMs);
+    engine.renderTo(primeT);
+    if (primeT < c.cfg.loopMs) return;
+    captureStill(c);
+    primeIndex++; primeT = 0;
+    if (!priming()) { staging.appendChild(engine.canvas); noLoop(); }
+  }
+
+  // =====================================================================
+  //  Hover / tap to replay
+  // =====================================================================
+  function activate(i) {
+    if (priming() || !engine || detailIndex >= 0 || i === activeIndex) return;
+    if (activeIndex >= 0) deactivate();
+    activeIndex = i;
+    const c = cards[i];
+    engine.mount(c.tile);                    // layers over this card's still
+    engine.switchTo(c.cfg, null);            // next draw() rebuilds from stroke 1
+    loop();
+  }
+
+  // Snap straight back to the finished still and stop: an unhovered grid costs
+  // nothing, and sweeping across it never leaves a card churning.
+  function deactivate() {
+    if (activeIndex < 0) return;
+    // Hand the status line back before stopping: noLoop() doesn't cancel a frame
+    // already scheduled, and that frame would write the phrase straight back in.
+    engine.switchTo(null, null);
+    staging.appendChild(engine.canvas);      // reveals the still underneath
+    activeIndex = -1;
+    noLoop();
+  }
+
+  cards.forEach((c, i) => {
+    // a short intent delay so dragging across the grid doesn't thrash the engine
+    c.tile.addEventListener('mouseenter', () => {
+      clearTimeout(hoverTimer);
+      hoverTimer = setTimeout(() => activate(i), 150);
+    });
+    c.tile.addEventListener('mouseleave', () => {
+      clearTimeout(hoverTimer);
+      if (activeIndex === i) deactivate();
+    });
+    // Clicking the painting opens it full screen — the same thing the expand
+    // button does, and the only path on touch, where there is no hover.
+    c.tile.addEventListener('click', () => openDetail(i));
+    c.tile.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetail(i); }
+    });
+    c.expandBtn.addEventListener('click', () => openDetail(i));
+  });
+
+  // =====================================================================
+  //  Detail view. The same one canvas, handed to a bigger tile.
+  // =====================================================================
+  const detail = document.getElementById('detail');
+  const detailTile = document.getElementById('detail-tile');
+  const detailStatus = document.getElementById('detail-status');
+
+  function openDetail(i) {
+    if (priming() || !engine || detailIndex >= 0) return;
+    clearTimeout(hoverTimer);
+    deactivate();
+    const cfg = cards[i].cfg;
+    detailIndex = i;
+    // Wall-label form: the movement above, the scene below. Labels are written
+    // "Movement · Scene", so split on the middot; a style with no scene keeps its
+    // whole label as the title and drops the eyebrow rather than saying it twice.
+    const scene = cfg.label.split('·').pop().trim();
+    const eyebrow = document.getElementById('detail-movement');
+    eyebrow.textContent = cfg.movement;
+    eyebrow.hidden = cfg.movement === scene;
+    document.getElementById('detail-label').textContent = scene;
+    document.getElementById('detail-note').textContent = cfg.note || '';
+    detailTile.style.setProperty('--ground', cfg.palette.ground);
+    detail.hidden = false;
+    document.body.style.overflow = 'hidden';
+    engine.mount(detailTile);
+    engine.switchTo(cfg, detailStatus);
+    loop();
+    document.getElementById('detail-back').focus();
+  }
+
+  function closeDetail() {
+    if (detailIndex < 0) return;
+    engine.switchTo(null, null);             // see deactivate()
+    staging.appendChild(engine.canvas);
+    noLoop();
+    detail.hidden = true;
+    document.body.style.overflow = '';
+    const back = cards[detailIndex].expandBtn;
+    detailIndex = -1;
+    back.focus();
+  }
+
+  document.getElementById('detail-back').addEventListener('click', closeDetail);
+  document.getElementById('detail-copy').addEventListener('click', (e) => {
+    if (detailIndex < 0) return;
+    copyCode(cards[detailIndex].cfg, e.currentTarget.querySelector('.copy-label'));
+  });
+  window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDetail(); });
+
+  // =====================================================================
+  function setup() {
+    // the status line belongs to the detail view; the grid replays silently
+    engine = createEngine(GALLERY[0], { mount: cards[0].tile });
+    engine.setup();
+  }
+  function draw() {
+    if (priming()) { primeStep(); return; }
+    engine.draw();
+  }
+</script>
+</body>
+</html>
