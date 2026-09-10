@@ -22,14 +22,14 @@
   </style>
   <script src="https://cdn.jsdelivr.net/npm/p5@2/lib/p5.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/p5.brush@latest"></script>
-  <script src="../engine.js"></script>
-  <script src="../style-impressionism.js"></script>
-  <script src="../style-abstraction.js"></script>
+  <script src="../public/engine.js"></script>
+  <script src="../public/style-impressionism.js"></script>
+  <script src="../public/style-abstraction.js"></script>
 </head>
 <body>
 <main>
   <h1>Render stills</h1>
-  <p>Paints every style to completion and PUTs it to <code>stills/&lt;key&gt;.webp</code>.
+  <p>Paints every style to completion and PUTs it to <code>public/stills/&lt;key&gt;.webp</code>.
      Takes about 90 seconds — one full painting per style, by definition.</p>
   <p><strong>Keep this tab in the foreground.</strong> A backgrounded tab is throttled to zero
      frames and the render silently stops making progress. Headless Chrome is not a shortcut
@@ -40,7 +40,7 @@
 </main>
 
 <script>
-  // Keep this list in step with GALLERY in index.html.
+  // Keep this list in step with GALLERY in public/index.html.
   const GALLERY = [
     STYLES.impressionismGarden, STYLES.impressionismDawn,
     STYLES.impressionismWillow, STYLES.impressionismWisteria,
@@ -79,7 +79,7 @@
 
   async function put(key, dataUrl) {
     const blob = await fetch(dataUrl).then((r) => r.blob());
-    const res = await fetch('../stills/' + key + '.webp', { method: 'PUT', body: blob });
+    const res = await fetch('../public/stills/' + key + '.webp', { method: 'PUT', body: blob });
     if (!res.ok) throw new Error('PUT failed: ' + res.status + ' — is tools/serve.py running?');
     return blob.size;
   }

@@ -1,10 +1,15 @@
 {
-  // Static assets only — there is no Worker script. Everything in the repo root
-  // is uploaded as-is and served straight from Cloudflare's edge; `index.html`
-  // is what "/" resolves to. See .assetsignore for what stays behind.
+  // Static assets only — there is no Worker script and no build step. Everything
+  // under public/ is uploaded as-is and served from Cloudflare's edge, with
+  // public/index.html answering "/".
+  //
+  // The directory is deliberately not the repo root: wrangler's only built-in
+  // ignores are .assetsignore, _redirects and _headers, so a root upload would
+  // publish .git — the whole history — unless an ignore file caught it. A
+  // directory that holds nothing but the site cannot leak by omission.
   "name": "painting-loaders",
   "compatibility_date": "2025-09-10",
   "assets": {
-    "directory": "."
+    "directory": "./public"
   }
 }

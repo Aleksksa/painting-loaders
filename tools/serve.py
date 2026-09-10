@@ -2,11 +2,11 @@
 """Static server for the gallery that also accepts PUT, so render-stills.html
 can write the pre-rendered stills straight back into the repo.
 
-    python3 tools/serve.py            # then open http://localhost:8000/
+    python3 tools/serve.py            # then open http://localhost:8000/public/
 
-PUT is deliberately narrow: only paths under stills/, only .webp, no traversal.
+PUT is deliberately narrow: only paths under public/stills/, only .webp, no traversal.
 Nothing else about this server is special — for just looking at the gallery,
-any static server (or opening index.html directly) works fine.
+any static server (or opening public/index.html directly) works fine.
 """
 import functools
 import http.server
@@ -29,10 +29,10 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def do_PUT(self):
         rel = self.path.lstrip('/')
         target = os.path.normpath(os.path.join(ROOT, rel))
-        ok = (target.startswith(os.path.join(ROOT, 'stills') + os.sep)
+        ok = (target.startswith(os.path.join(ROOT, 'public', 'stills') + os.sep)
               and target.endswith('.webp'))
         if not ok:
-            self.send_error(403, 'PUT is only allowed for stills/*.webp')
+            self.send_error(403, 'PUT is only allowed for public/stills/*.webp')
             return
         body = self.rfile.read(int(self.headers.get('Content-Length', 0)))
         os.makedirs(os.path.dirname(target), exist_ok=True)

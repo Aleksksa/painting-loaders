@@ -9,7 +9,7 @@ different every time it runs and it scales to any size.
 
 ## Run it
 
-Open `index.html` in a browser. That's it — no build step, no install. p5 and p5.brush come
+Open `public/index.html` in a browser. That's it — no build step, no install. p5 and p5.brush come
 from a CDN, so the page needs a network connection the first time.
 
 If you'd rather serve it, any static server will do:
@@ -21,8 +21,12 @@ python3 -m http.server 8000
 ## Deploy it
 
 The site is static, so Cloudflare Workers serves it with no build step and no Worker script —
-`wrangler.jsonc` points the asset uploader at the repo root and `.assetsignore` holds back the
-files that aren't part of the site.
+`wrangler.jsonc` points the asset uploader at `public/`, and `public/index.html` answers `/`.
+
+That directory exists for exactly this reason. Wrangler's only built-in ignores are
+`.assetsignore`, `_redirects` and `_headers`, so uploading the repo root would publish `.git`
+along with the site unless an ignore file caught it. A directory holding nothing but the site
+cannot leak by omission.
 
 ```
 npx wrangler deploy
@@ -44,14 +48,15 @@ standalone HTML file you can drop anywhere.
 
 | File | What it is |
 | --- | --- |
-| `index.html` | The page itself: markup, design tokens, layout |
-| `gallery.js` | Cards, hover replay, the full-screen view, theme, the boot overlay |
-| `engine.js` | `createEngine(styleConfig, opts)` — the reveal loop, plus the movement-agnostic helpers |
-| `style-*.js` | One movement each: its palette, its drawing vocabulary, and its stroke list |
-| `copycode.js` | Assembles a style's standalone file from the live functions via `toString()` |
-| `favicon.svg` | The painted bloom, also drawn in CSS as the boot overlay's loader |
+| `public/` | The site — everything here, and nothing else, is what gets deployed |
+| `public/index.html` | The page itself: markup, design tokens, layout |
+| `public/gallery.js` | Cards, hover replay, the full-screen view, theme, the boot overlay |
+| `public/engine.js` | `createEngine(styleConfig, opts)` — the reveal loop, plus the movement-agnostic helpers |
+| `public/style-*.js` | One movement each: its palette, its drawing vocabulary, and its stroke list |
+| `public/copycode.js` | Assembles a style's standalone file from the live functions via `toString()` |
+| `public/favicon.svg` | The painted bloom, also drawn in CSS as the boot overlay's loader |
+| `public/stills/*.webp` | The finished pictures, rendered ahead of time — what the grid shows at rest |
 | `wrangler.jsonc` | Cloudflare Workers config — assets only, no Worker script |
-| `stills/*.webp` | The finished pictures, rendered ahead of time — what the grid shows at rest |
 | `tools/` | Re-render the stills; see below |
 
 There is exactly **one** live canvas on the page. It gets moved into whichever tile is painting
@@ -72,8 +77,8 @@ python3 tools/serve.py
 ```
 
 then open `http://localhost:8000/tools/render-stills.html` and press **Render all**. It paints
-every style and writes `stills/<key>.webp` back into the repo through the server's `PUT` handler
-(which only ever accepts `.webp` under `stills/`). It takes about 90 seconds — one full painting
+every style and writes `public/stills/<key>.webp` back into the repo through the server's `PUT`
+handler (which only ever accepts `.webp` under `public/stills/`). It takes about 90 seconds — one full painting
 per style, by definition.
 
 Two things that will waste your afternoon otherwise:
@@ -106,7 +111,7 @@ STYLES.myMovement = {
 };
 ```
 
-Then add a `<script>` tag for it in `index.html` and one entry to the `GALLERY` array. Wrap the
+Then add a `<script>` tag for it in `public/index.html` and one entry to the `GALLERY` array. Wrap the
 file in an IIFE so movements can reuse names like `drawFlower` without colliding.
 
 Three rules the Copy code assembler imposes, all of which fail loudly if broken:
@@ -123,7 +128,7 @@ the shared brush registry in place and is therefore once-per-page.
 
 ## Theming
 
-Design tokens live in the `:root` block at the top of `index.html` — `--paper`, `--sunk`,
+Design tokens live in the `:root` block at the top of `public/index.html` — `--paper`, `--sunk`,
 `--ink`, `--soft`, `--line`, `--accent`, plus the display type variables. Dark values sit in
 `[data-theme="dark"]`. Five alternate typeface pairings are kept as a commented block right
 below the tokens; swapping one in (and adding its family to the fonts link) re-voices the whole
