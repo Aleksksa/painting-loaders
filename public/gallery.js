@@ -26,6 +26,7 @@ const LUCIDE = {
   copy: '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
   'maximize-2': '<polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" x2="14" y1="3" y2="10"/><line x1="3" x2="10" y1="21" y2="14"/>',
   'chevron-left': '<path d="m15 18-6-6 6-6"/>',
+  'chevron-right': '<path d="m9 18 6-6-6-6"/>',
 };
 const icon = (name, size = 16) =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" ` +
@@ -33,7 +34,9 @@ const icon = (name, size = 16) =>
   `aria-hidden="true">${LUCIDE[name]}</svg>`;
 
 // fill the placeholders sitting in the static markup
-document.querySelectorAll('[data-icon]').forEach((el) => { el.outerHTML = icon(el.dataset.icon); });
+document.querySelectorAll('[data-icon]').forEach((el) => {
+  el.outerHTML = icon(el.dataset.icon, el.dataset.size ? +el.dataset.size : 16);
+});
 
 // =====================================================================
 //  Theme. The opening value is already on <html> (see the head script);
@@ -152,11 +155,11 @@ cards.forEach((c, i) => {
 const detail = document.getElementById('detail');
 const detailTile = document.getElementById('detail-tile');
 const detailStatus = document.getElementById('detail-status');
+const detailText = document.querySelector('.detail-text');
 
-function openDetail(i) {
-  if (!engine || detailIndex >= 0) return;
-  clearTimeout(hoverTimer);
-  deactivate();
+// Hand the view to one painting: relabel it and start it from stroke one.
+// Called both when the view opens and when the arrows step along the gallery.
+function showDetail(i) {
   const cfg = cards[i].cfg;
   detailIndex = i;
   // Wall-label form: the movement above, the scene below. Labels are written
@@ -169,12 +172,30 @@ function openDetail(i) {
   document.getElementById('detail-label').textContent = scene;
   document.getElementById('detail-note').textContent = cfg.note || '';
   detailTile.style.setProperty('--ground', cfg.palette.ground);
-  detail.hidden = false;
-  document.body.style.overflow = 'hidden';
   engine.mount(detailTile);
   engine.switchTo(cfg, detailStatus);
   loop();
+}
+
+function openDetail(i) {
+  if (!engine || detailIndex >= 0) return;
+  clearTimeout(hoverTimer);
+  deactivate();
+  detail.hidden = false;
+  document.body.style.overflow = 'hidden';
+  showDetail(i);
   document.getElementById('detail-back').focus();
+}
+
+// Arrows and arrow keys: the next painting along, wrapping at either end.
+function stepDetail(dir) {
+  if (detailIndex < 0 || cards.length < 2) return;
+  // The wall label is the only part that changes instantly; let it fade in
+  // again so the swap reads as a new picture rather than a relabelled one.
+  detailText.style.animation = 'none';
+  void detailText.offsetWidth;             // forces the restart
+  detailText.style.animation = '';
+  showDetail((detailIndex + dir + cards.length) % cards.length);
 }
 
 function closeDetail() {
@@ -190,11 +211,18 @@ function closeDetail() {
 }
 
 document.getElementById('detail-back').addEventListener('click', closeDetail);
+document.getElementById('detail-prev').addEventListener('click', () => stepDetail(-1));
+document.getElementById('detail-next').addEventListener('click', () => stepDetail(1));
 document.getElementById('detail-copy').addEventListener('click', (e) => {
   if (detailIndex < 0) return;
   copyCode(cards[detailIndex].cfg, e.currentTarget.querySelector('.copy-label'));
 });
-window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDetail(); });
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { closeDetail(); return; }
+  if (detailIndex < 0) return;
+  if (e.key === 'ArrowLeft') { e.preventDefault(); stepDetail(-1); }
+  else if (e.key === 'ArrowRight') { e.preventDefault(); stepDetail(1); }
+});
 
 // =====================================================================
 //  Boot overlay. Waits for the web font and the first row of stills, so the
