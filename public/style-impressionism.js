@@ -6,8 +6,9 @@
  *  reuse names like drawFlower without colliding, and reads W / H / m from
  *  engine.js at call time (never captured at load time).
  *
- *  Exports four sibling configs sharing one vocabulary. index.html shows
- *  garden as the Impressionism card; loader.html rotates all four.
+ *  Exports eleven sibling configs sharing one vocabulary, all of them
+ *  cards in index.html. loader.html rotates the first four (garden, dawn,
+ *  willow, wisteria).
  * ===================================================================== */
 window.STYLES = window.STYLES || {};
 
@@ -61,6 +62,36 @@ window.STYLES = window.STYLES || {};
       accents: ['#f6d4dc', '#eeb6c4', '#e39bb0', '#fff1f4', '#f9e4ea'], highlights: ['#f7e6b4', '#fff8ee'],
       phrases: ['creating…', 'washing the sky…', 'planting the orchard…', 'blossoming…', 'finished'],
     },
+    // The second set. The four colour lists keep their generic names; what each
+    // slot means in these scenes is noted per palette.
+    // koi: washes = teals / foliage = deep water and the shadow fish / accents = koi oranges / highlights = cream flecks
+    koi: {
+      seed: 1874, ground: '#3f7f8a',
+      washes: ['#4f9aa0', '#7fc0b8', '#2f6e8a', '#a8d4c6'], foliage: ['#2a5d70', '#1f4a60', '#173a4a', '#5f9a90'],
+      accents: ['#e8621e', '#f08a2a', '#c9471a', '#f6b06a'], highlights: ['#f3efc9', '#e9e6a8'],
+      phrases: ['creating…', 'stirring the water…', 'swirling…', 'the koi come up…', 'finished'],
+    },
+    // roses: washes = lilac-grey, gold, pale blue, cream / accents = rose pinks light to deep, coral heart / highlights = gold light, white
+    roses: {
+      seed: 1874, ground: '#eee6dc',
+      washes: ['#d9cdc9', '#e8d9a8', '#c9c2d4', '#f1e2c4'], foliage: ['#5f7a4a', '#3f5a3a', '#2f4432', '#9bb47a'],
+      accents: ['#f3b4a9', '#ea8f8a', '#d96468', '#f8cfc4', '#fbe6de'], highlights: ['#f4d98a', '#fff6e6'],
+      phrases: ['creating…', 'dappling the light…', 'shading the leaves…', 'opening the roses…', 'finished'],
+    },
+    // oranges: washes = sky blues and a pale ground / accents = the fruit, light to deep / highlights = blossom white, rind light
+    oranges: {
+      seed: 1874, ground: '#eef0ea',
+      washes: ['#b7cfe2', '#9fbfd9', '#d7e3ea', '#c2d4b0'], foliage: ['#6f9a3f', '#3f6b2f', '#24401f', '#a9c35a'],
+      accents: ['#f28c1e', '#e5731a', '#f7a23a', '#c95a12'], highlights: ['#fff6e0', '#fdf1c9'],
+      phrases: ['creating…', 'clearing the sky…', 'growing the leaves…', 'ripening…', 'finished'],
+    },
+    // sail: washes = sky blue, lilac sea, pink glow, grey-blue ripple / foliage = hull and rowboat darks / accents = cloud peach
+    sail: {
+      seed: 1874, ground: '#e9e2e0',
+      washes: ['#b9c3d9', '#c9b4c6', '#e6b9b0', '#8d95b3'], foliage: ['#4a4f6a', '#3a3f55', '#2c3044', '#7a7f9a'],
+      accents: ['#f0b39a', '#e8a48e', '#f6cdb5', '#f9dccb'], highlights: ['#f8e6d2', '#fdf5ee'],
+      phrases: ['creating…', 'washing the sky…', 'stilling the sea…', 'raising a sail…', 'finished'],
+    },
   };
 
   // =====================================================================
@@ -81,8 +112,8 @@ window.STYLES = window.STYLES || {};
     bloomFill(color, 250, bleed); brush.polygon(rosette(x, y, r, lobes, inner, rot, 0.05));
   }
   function centerDot(x, y, r, color, opacity = 250) { washStyle(color, opacity); brush.polygon(jitterEllipse(x, y, r, r * rr(0.85, 1), 12, 0.14)); }
-  function flowerCols(C) {
-    const a = C.accents, h = C.highlights, v = S.vivid;
+  function flowerCols(C, v = S.vivid) {
+    const a = C.accents, h = C.highlights;
     const light = vivid(a[0], v), mid = vivid(a[1] || a[0], v), deep = vivid(a[2] || a[1] || a[0], v);
     return { light, mid, deep, base: a[3] || mixHex(light, '#ffffff', 0.45), center: vivid(h[0] || '#e6b94f', v), pale: h[1] || mixHex(light, '#ffffff', 0.7), shade: mixHex(deep, '#3b3550', 0.45) };
   }
@@ -672,6 +703,380 @@ window.STYLES = window.STYLES || {};
   }
 
   // =====================================================================
+  //  Second set: koi, roses, oranges, sail. Same rules as the flowers above:
+  //  a flat wash body under a bleeding fill for solid colour, never an
+  //  outline, never brush.circle at a small radius.
+  //
+  //  Where the playground tuned one of these scenes away from the shared
+  //  dials (wetter, more glazes, a paler rose), the builder keeps that value
+  //  as a local constant, as buildPoppies does, so no other painting moves.
+  // =====================================================================
+  function ringPts(cx, cy, r, a0, a1, n = 10) {
+    const pts = [];
+    for (let i = 0; i <= n; i++) { const a = a0 + (a1 - a0) * (i / n); pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]); }
+    return pts;
+  }
+  // a pointed ellipse: round at the base (-rx along rot), tapering to a tip at +rx. Petals, leaves, buds.
+  function petalPts(cx, cy, rx, ry, rot, n = 14, jit = 0.05) {
+    const pts = [], cr = Math.cos(rot), sr = Math.sin(rot);
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * TWO_PI, c = Math.cos(a), k = 1 + rr(-jit, jit);
+      const px = rx * c * k, py = ry * Math.sin(a) * Math.sqrt(1 - 0.9 * c) / 1.1 * k;
+      pts.push([cx + px * cr - py * sr, cy + px * sr + py * cr]);
+    }
+    return pts;
+  }
+  // a fish silhouette: blunt head toward `angle`, fullest a third of the way back, a waist, a forked tail
+  function taperedBody(x, y, len, wid, angle, jit = 0.06) {
+    const ca = Math.cos(angle), sa = Math.sin(angle);
+    const P = (t, v) => { const u = len / 2 - t * len; return [x + u * ca - v * sa, y + u * sa + v * ca]; };
+    const T = [0, 0.1, 0.3, 0.5, 0.7, 0.82, 0.92, 1], HW = [0.3, 0.72, 1, 0.9, 0.62, 0.3, 0.55, 0.85];
+    const top = [], bottom = [];
+    for (let i = 0; i < T.length; i++) {
+      const h = HW[i] * (wid / 2) * (1 + rr(-jit, jit));
+      top.push(P(T[i], -h)); bottom.push(P(T[i], h));
+    }
+    return top.concat([P(0.88, 0)], bottom.reverse());
+  }
+  function drawKoi(x, y, len, angle, K) {
+    const ca = Math.cos(angle), sa = Math.sin(angle);
+    const off = (u, v) => [x + u * ca - v * sa, y + u * sa + v * ca];
+    washStyle(K.body, 250); brush.polygon(taperedBody(x, y, len, len * 0.3, angle, 0.04));
+    bloomFill(K.body, 235, 0.22); brush.polygon(taperedBody(x, y, len * 1.04, len * 0.33, angle, 0.08));
+    // a deeper saddle along the back, a paler belly, cream flecks, an eye
+    const [bx, by] = off(len * 0.08, -len * 0.06);
+    washStyle(K.deep, 200); brush.polygon(jitterEllipse(bx, by, len * 0.28, len * 0.07, 10, 0.15, angle));
+    const [px, py] = off(len * 0.05, len * 0.08);
+    washStyle(K.pale, 170); brush.polygon(jitterEllipse(px, py, len * 0.26, len * 0.05, 10, 0.15, angle));
+    for (let i = 0; i < 3; i++) { const [fx, fy] = off(rr(-len * 0.2, len * 0.35), rr(-len * 0.08, len * 0.08)); centerDot(fx, fy, len * rr(0.02, 0.04), K.fleck, 220); }
+    const [ex, ey] = off(len * 0.4, -len * 0.04); centerDot(ex, ey, len * 0.018, K.eye, 230);
+  }
+  // a rose: four nested scalloped rings, the heart drifting off centre so it hints at the spiral,
+  // and a few pale petal rims between the rings
+  function drawRose(x, y, s, F) {
+    const rings = [
+      { r: 1.0, lobes: 9, inner: 0.8, col: F.light },
+      { r: 0.74, lobes: 7, inner: 0.74, col: mixHex(F.light, F.mid, 0.5) },
+      { r: 0.5, lobes: 6, inner: 0.7, col: F.mid },
+      { r: 0.3, lobes: 5, inner: 0.66, col: F.deep },
+    ];
+    const dx = rr(-0.08, 0.08) * s, dy = rr(-0.06, 0.06) * s;
+    // the outer ring gets a wider solid body so the bloom reads as paint, not a stain
+    rings.forEach((R, i) => bloomShape(x + dx * i, y + dy * i, s * R.r, R.lobes, R.inner, R.col, 0.26 - i * 0.03, 0.8 + i * 0.02));
+    if (S.detail > 0.3) {
+      for (let i = 0; i < 3; i++) {
+        const a = rr(0, TWO_PI), d = s * rr(0.5, 0.8);
+        washStyle(F.pale, 120); brush.polygon(jitterEllipse(x + Math.cos(a) * d, y + Math.sin(a) * d, s * 0.22, s * 0.045, 8, 0.15, a + HALF_PI));
+      }
+    }
+    centerDot(x + dx * 3, y + dy * 3, s * 0.1, mixHex(F.deep, F.shade, 0.4), 220);
+  }
+  // an orange: a solid disc, a shade crescent lower right, light upper left, one glint
+  function drawOrange(x, y, r, O) {
+    // mostly a solid wash disc: the bleed is kept low so the fruit has a rind, not a halo
+    const rot = rr(0, TWO_PI);
+    washStyle(O.mid, 252); brush.polygon(jitterEllipse(x, y, r * 0.94, r * 0.9, 14, 0.05, rot));
+    fillStyle(O.mid, 235, 0.12 + S.water * 0.1, 0.4, 0.3); brush.polygon(jitterEllipse(x, y, r, r * 0.96, 14, 0.05, rot));
+    washStyle(O.deep, 120); brush.polygon(jitterEllipse(x + r * 0.16, y + r * 0.2, r * 0.7, r * 0.6, 12, 0.08, 0.6));
+    washStyle(O.light, 140); brush.polygon(jitterEllipse(x - r * 0.22, y - r * 0.26, r * 0.4, r * 0.3, 10, 0.1, 0.7));
+    centerDot(x - r * 0.36, y - r * 0.4, r * 0.1, O.glint, 150);
+  }
+
+  // a reveal box of half-size r around a point, clipped to the canvas
+  function boxAround(x, y, r) { return [Math.max(0, x - r), Math.max(0, y - r), Math.min(W, x + r), Math.min(H, y + r)].map(Math.round); }
+  // pointed leaf dabs inside an ellipse, batched through dMarks. rotBias(x, y) gives each leaf a direction to fan along.
+  function dLeafDabs(cx, cy, rx, ry, n, cols, size, rotBias = null, op = [170, 235]) {
+    const marks = [];
+    n = Math.max(2, Math.round(n * (0.3 + 0.7 * S.detail)));
+    size *= S.brushSize * (1.4 - 0.4 * S.detail);
+    for (let i = 0; i < n; i++) {
+      const a = rr(0, TWO_PI), d = Math.sqrt(random());
+      const x = cx + Math.cos(a) * rx * d, y = cy + Math.sin(a) * ry * d, r = size * rr(0.6, 1.4);
+      const rot = rotBias ? rotBias(x, y) + rr(-0.5, 0.5) : rr(0, TWO_PI);
+      marks.push({ color: pickOne(cols), pts: petalPts(x, y, r * 2, r * 0.7, rot, 10, 0.1), op: Math.round(rr(op[0], op[1]) - S.water * 40) });
+    }
+    return dMarks(marks);
+  }
+
+  // Koi in swirling water. Darker, wetter and more heavily glazed than the
+  // shared dials; everything turns around one bright eye upper right.
+  function buildKoi(C) {
+    const out = [], { density: dens, scale: sc, detail: det, brushSize: bs } = S;
+    const water = 0.6, coverage = 0.9, glaze = 0.7, touch = 0.3;
+    const { washes, foliage, accents, highlights } = C;
+    const cx0 = W * 0.68, cy0 = H * 0.34;
+    const K = { body: vivid(accents[0], S.vivid), deep: accents[2] || accents[0], pale: accents[3] || mixHex(accents[1] || accents[0], '#ffffff', 0.4), fleck: highlights[0], eye: foliage[2] };
+
+    // the water: a lighter zone around the swirl, dark zones at the corners, a bright eye
+    out.push(dWash(washes[0], Math.round(coverage * 200)));
+    out.push(dBlob(cx0, cy0, W * 0.36, H * 0.3, washes[1] || washes[0], 200, 0.6, 0.5, 0.3, 0.25, 520));
+    out.push(dBlob(W * 0.15, H * 0.15, W * 0.3, H * 0.28, foliage[0], 210, 0.5, 0.5, 0.4, 0.25, 460));
+    out.push(dBlob(W * 0.2, H * 0.85, W * 0.34, H * 0.26, washes[2] || washes[0], 200, 0.5, 0.5, -0.3, 0.25, 460));
+    out.push(dBlob(W * 0.9, H * 0.9, W * 0.2, H * 0.2, foliage[1], 190, 0.5, 0.5, 0, 0.25, 380));
+    out.push(dBlob(W * 0.55, H * 0.55, W * 0.3, H * 0.14, washes[3] || washes[1] || washes[0], 150, 0.6, 0.5, -0.5, 0.25, 420));
+    out.push(dBlob(cx0, cy0, W * 0.1, H * 0.08, highlights[0], 90, 0.7, 0.5, 0, 0.25, 300));
+
+    // the swirl: marker glazes along arcs around the eye, opening out a little as
+    // they go, inside first and four to a stroke; then the ripple rings at the eye
+    const swirlCols = [washes[1] || washes[0], washes[3] || washes[1] || washes[0], washes[2] || washes[0], highlights[0], foliage[3] || washes[0], washes[0], highlights[1] || highlights[0]];
+    const nArc = Math.round((40 + glaze * 60) * (0.5 + 0.5 * det));
+    const arcs = [];
+    for (let i = 0; i < nArc; i++) {
+      const r = m * (0.05 + 0.62 * Math.pow(random(), 0.8)) * sc;
+      const a0 = rr(0, TWO_PI), span = rr(0.4, 1.6) * (r < m * 0.15 ? 1.6 : 1);
+      const pts = ringPts(cx0, cy0, r, a0, a0 + span, 9).map(([px, py], k) => { const g = 1 + k * 0.012; return [cx0 + (px - cx0) * g, cy0 + (py - cy0) * g]; });
+      arcs.push({ r, pts, color: pickOne(swirlCols), w: rr(1.4, 5) * bs * (0.6 + 0.4 * sc) });
+    }
+    arcs.sort((a, b) => a.r - b.r);
+    for (let i = 0; i < arcs.length; i += 4) {
+      const b = arcs.slice(i, i + 4);
+      const bb = bboxOf(b.flatMap((A) => A.pts), 14 + Math.max(...b.map((A) => A.w)) * 4);
+      out.push(D(() => { for (const A of b) { brush.field('waves'); strokeStyle('marker', A.color, A.w); brush.spline(A.pts, 0.5); brush.noField(); } }, bb, raxis(), rdir(), 260, 40));
+    }
+    const rings = [];
+    for (let k = 0; k < 4; k++) {
+      const r = m * (0.03 + k * 0.03) * sc, a0 = rr(0, TWO_PI);
+      const pts = ringPts(cx0 + rr(-2, 2), cy0 + rr(-2, 2), r, a0, a0 + TWO_PI * rr(0.7, 0.95), 14);
+      rings.push({ pts, color: k % 2 ? (highlights[1] || highlights[0]) : highlights[0], w: rr(1.5, 2.5) * bs });
+    }
+    out.push(D(() => { for (const R of rings) { strokeStyle('marker', R.color, R.w); brush.spline(R.pts, 0.5); } }, bboxOf(rings.flatMap((R) => R.pts), 24), 'y', -1, 320, 60));
+
+    // two shadow koi deep in the water, then the orange ones, each revealed tail to head
+    const shadows = [{ x: W * 0.28, y: H * 0.3, len: m * 0.3 * sc, a: 0.5 }, { x: W * 0.7, y: H * 0.78, len: m * 0.26 * sc, a: -2.6 }];
+    for (const s of shadows) {
+      const body = taperedBody(s.x, s.y, s.len, s.len * 0.3, s.a, 0.08);
+      out.push(D(() => { fillStyle(foliage[1], 130, 0.35 + water * 0.2, 0.5, 0.3); brush.polygon(body); }, bboxOf(body, s.len * 0.3 + 20), 'x', Math.sign(Math.cos(s.a)) || 1, 340, 60));
+    }
+    const koi = [
+      { x: W * 0.6, y: H * 0.3, len: m * 0.3 * sc, a: -0.5 + rr(-0.15, 0.15) },
+      { x: W * 0.3, y: H * 0.68, len: m * 0.36 * sc, a: 0.35 + rr(-0.15, 0.15) },
+    ];
+    if (dens > 0.75) koi.push({ x: W * 0.85, y: H * 0.65, len: m * 0.2 * sc, a: 2.4 });
+    for (const k of koi) out.push(D(() => drawKoi(k.x, k.y, k.len, k.a, K), boxAround(k.x, k.y, k.len * 0.55 + 20), 'x', Math.sign(Math.cos(k.a)) || 1, 440, 100));
+
+    // cream flecks riding the swirl, a glaze back over each tail so the fish sit in the water, light at the eye
+    const flecks = [];
+    for (let i = 0; i < Math.round((30 + dens * 30) * (0.4 + 0.6 * det)); i++) {
+      const r = m * rr(0.06, 0.6) * sc, a = rr(0, TWO_PI), x = cx0 + Math.cos(a) * r, y = cy0 + Math.sin(a) * r;
+      if (x < -5 || x > W + 5 || y < -5 || y > H + 5) continue;
+      const len = m * rr(0.01, 0.03) * sc * bs, h = m * rr(0.002, 0.004) * bs;
+      flecks.push({ color: random() < 0.6 ? highlights[0] : (highlights[1] || highlights[0]), pts: jitterEllipse(x, y, len, h, 8, 0.2, a + HALF_PI + rr(-0.2, 0.2)), op: Math.round(rr(150, 230)) });
+    }
+    out.push(...dMarks(flecks));
+    for (const k of koi) {
+      const tx = k.x - Math.cos(k.a) * k.len * 0.35, ty = k.y - Math.sin(k.a) * k.len * 0.35;
+      const th = Math.atan2(ty - cy0, tx - cx0), r = Math.hypot(tx - cx0, ty - cy0);
+      const pts = ringPts(cx0, cy0, r, th - 0.3, th + 0.3, 6), w = rr(3, 5) * bs;
+      out.push(D(() => { brush.field('waves'); strokeStyle('marker', washes[1] || washes[0], w); brush.spline(pts, 0.5); brush.noField(); }, bboxOf(pts, 14 + w * 4), raxis(), rdir(), 200, 40));
+    }
+    const eyePts = [];
+    for (let i = 0; i < 8; i++) { const a = rr(0, TWO_PI), r = m * rr(0.05, 0.4); eyePts.push([cx0 + Math.cos(a) * r, cy0 + Math.sin(a) * r, 10]); }
+    out.push(...dTouches(eyePts, C, Math.round(touch * 16), () => rr(0, TWO_PI), 0.6));
+    return out;
+  }
+
+  // Roses in dappled light. Painted a little larger than the shared scale and
+  // less saturated than the shared vivid, so the pinks stay soft.
+  function buildRoses(C) {
+    const out = [], { water, density: dens, soft, detail: det, brushSize: bs } = S;
+    const sc = 1.2;
+    const { washes, accents, highlights } = C;
+    const F = flowerCols(C, 0.25), G = foliageCols(C);
+    const lilac = washes[0], gold = washes[1] || highlights[0], blue = washes[2] || lilac, cream = washes[3] || highlights[1] || highlights[0];
+
+    // a lilac-grey ground, a gold glow upper right, a cool patch low left, the dark leaf mass upper left
+    if (S.coverage > 0.02) out.push(dWash(lilac, Math.round(S.coverage * 200)));
+    out.push(dBlob(W * 0.5, H * 0.6, W * 0.55, H * 0.45, lilac, 190, 0.5, 0.5, 0, 0.2, 520));
+    out.push(dBlob(W * 0.78, H * 0.14, W * 0.34, H * 0.24, gold, 200, 0.6, 0.5, 0.2, 0.25, 480));
+    out.push(dBlob(W * 0.85, H * 0.06, W * 0.2, H * 0.12, highlights[0], 150, 0.7, 0.5, 0, 0.25, 360));
+    out.push(dBlob(W * 0.2, H * 0.85, W * 0.32, H * 0.22, blue, 160, 0.6, 0.5, 0, 0.25, 440));
+    out.push(dBlob(W * 0.18, H * 0.14, W * 0.26, H * 0.2, G.shade, 215, 0.4 + water * 0.2, 0.5, 0.3, 0.25, 440));
+    out.push(dBlob(W * 0.36, H * 0.08, W * 0.16, H * 0.1, G.deep, 200, 0.45, 0.5, -0.2, 0.25, 340));
+    out.push(dBlob(W * 0.08, H * 0.36, W * 0.14, H * 0.12, G.deep, 190, 0.45, 0.5, 0.4, 0.25, 340));
+
+    // the dapple, everywhere, then leaves in the dark mass and a few loose ones right of the roses
+    const dapple = [];
+    const dotCols = [lilac, gold, blue, cream, highlights[1] || cream, highlights[0], accents[3] || F.pale, mixHex(lilac, '#ffffff', 0.4)];
+    for (let i = 0; i < Math.round((120 + dens * 160) * (0.3 + 0.7 * det)); i++) {
+      const x = rr(-5, W + 5), y = rr(-5, H + 5), r = m * rr(0.008, 0.02) * sc * bs * (1.4 - 0.4 * det);
+      dapple.push({ color: pickOne(dotCols), pts: jitterEllipse(x, y, r * rr(1, 1.6), r, 12, 0.1 + soft * 0.08, rr(0, TWO_PI)), op: Math.round(rr(90, 170) - water * 30) });
+    }
+    out.push(...dMarks(dapple));
+    out.push(...dLeafDabs(W * 0.2, H * 0.16, W * 0.26, H * 0.18, Math.round(22 + dens * 24), [G.shade, G.deep, G.mid, G.light], m * 0.011 * sc, null, [130, 200]));
+    out.push(...dLeafDabs(W * 0.62, H * 0.28, W * 0.14, H * 0.12, Math.round(6 + dens * 8), [G.deep, G.mid, G.light], m * 0.011 * sc, null, [130, 200]));
+
+    // a pale bud-rose behind the group, two stems up into the leaves, then the roses back to front
+    const roses = [
+      { x: W * 0.32, y: H * 0.36, s: m * 0.115 * sc },
+      { x: W * 0.54, y: H * 0.6, s: m * 0.15 * sc },
+      { x: W * 0.28, y: H * 0.7, s: m * 0.11 * sc },
+    ];
+    if (dens > 0.7) roses.push({ x: W * 0.78, y: H * 0.8, s: m * 0.08 * sc });
+    const bud = { x: W * 0.74, y: H * 0.5, s: m * 0.07 * sc };
+    out.push(D(() => bloomShape(bud.x, bud.y, bud.s, 7, 0.76, mixHex(F.light, cream, 0.5), 0.3, 0.72), boxAround(bud.x, bud.y, bud.s * 2.2 + 16), raxis(), rdir(), 320, 80));
+    const sorted = roses.slice().sort((a, b) => a.y - b.y);
+    for (const r of sorted.slice(0, 2)) {
+      const stem = [[r.x - r.s * 0.2, r.y - r.s * 0.95], [r.x - W * 0.06 + rr(-8, 8), r.y - r.s - H * 0.1], [r.x - W * 0.12, H * 0.2]];
+      const w = rr(1.8, 2.6) * bs;
+      out.push(D(() => { brush.field('hand'); strokeStyle('marker', G.deep, w); brush.spline(stem, 0.6); brush.noField(); }, bboxOf(stem, 14 + w * 4), 'y', 1, 220, 40));
+    }
+    for (const r of sorted) out.push(D(() => drawRose(r.x, r.y, r.s, F), boxAround(r.x, r.y, r.s * 2.2 + 16), raxis(), rdir(), 460, 100));
+
+    // a lighter cream and gold dapple over the roses' rims, then light
+    const light = [];
+    for (let i = 0; i < Math.round(30 + dens * 30); i++) {
+      const r0 = pickOne(roses), a = rr(0, TWO_PI), d = r0.s * rr(1.1, 1.6);
+      const x = r0.x + Math.cos(a) * d, y = r0.y + Math.sin(a) * d, r = m * rr(0.006, 0.012) * sc * bs;
+      light.push({ color: random() < 0.5 ? cream : (random() < 0.5 ? gold : (highlights[1] || cream)), pts: jitterEllipse(x, y, r * 1.5, r, 8, 0.2, rr(0, TWO_PI)), op: 100 });
+    }
+    out.push(...dMarks(light));
+    out.push(...dTouches(roses.map((r) => [r.x, r.y - r.s * 0.6, r.s * 0.8]), C, Math.round(S.touch * 16), () => rr(-0.4, 0.4), 0.7));
+    return out;
+  }
+
+  // An orange tree against the sky. A little drier than the shared dials so
+  // the sky stays clear and the fruit keeps a rind instead of a halo.
+  function buildOranges(C) {
+    const out = [], { density: dens, scale: sc, detail: det, brushSize: bs } = S;
+    const water = 0.45;
+    const { washes, foliage, accents, highlights } = C;
+    const G = foliageCols(C);
+    const O = { light: vivid(accents[2] || accents[0], S.vivid), mid: vivid(accents[0], S.vivid), deep: accents[3] || accents[1] || accents[0], glint: highlights[1] || highlights[0] };
+    const canopyX = W * 0.62, canopyY = H * 0.58;
+
+    // a blue sky, brightest upper left, a pale ground behind the leaves lower right
+    if (S.coverage > 0.02) out.push(dWash(washes[2] || washes[0], Math.round(S.coverage * 200)));
+    out.push(dBand(-20, H * 0.45, washes[0], Math.round(200 - water * 40), m * 0.04));
+    out.push(dBlob(W * 0.15, H * 0.2, W * 0.3, H * 0.28, washes[1] || washes[0], 190, 0.6, 0.5, 0.2, 0.2, 480));
+    out.push(dBlob(W * 0.1, H * 0.5, W * 0.16, H * 0.2, mixHex(washes[0], highlights[0], 0.5), 150, 0.7, 0.5, 0, 0.25, 360));
+    out.push(dBand(H * 0.4, H + 20, washes[3] || washes[2] || washes[0], Math.round(190 - water * 40), m * 0.04));
+
+    // canopy masses lower right and top right, blossom specks where the sky meets the leaves
+    out.push(dBlob(canopyX, canopyY, W * 0.44, H * 0.4, mixHex(G.deep, G.shade, 0.5), 235, 0.35 + water * 0.2, 0.5, 0.2, 0.25, 540));
+    out.push(dBlob(W * 0.8, H * 0.14, W * 0.26, H * 0.14, G.deep, 205, 0.45, 0.5, -0.3, 0.25, 400));
+    out.push(dBlob(W * 0.5, H * 0.85, W * 0.36, H * 0.16, G.shade, 215, 0.4, 0.5, 0.1, 0.25, 420));
+    out.push(dBlob(W * 0.85, H * 0.62, W * 0.2, H * 0.24, G.shade, 200, 0.4, 0.5, 0, 0.25, 380));
+    out.push(dBlob(W * 0.35, H * 0.42, W * 0.18, H * 0.14, G.mid, 190, 0.5, 0.5, 0.4, 0.25, 340));
+    const specks = [];
+    for (let i = 0; i < Math.round((24 + dens * 30) * (0.4 + 0.6 * det)); i++) {
+      const x = rr(0, W * 0.55), y = rr(0, H * 0.5), r = m * rr(0.004, 0.008) * sc * bs;
+      specks.push({ color: random() < 0.7 ? highlights[0] : (highlights[1] || highlights[0]), pts: jitterEllipse(x, y, r, r * rr(0.8, 1), 8, 0.2), op: Math.round(rr(170, 240)) });
+    }
+    out.push(...dMarks(specks));
+
+    // the fruit is planned now so the leaf pass can fan around it
+    const fruit = [
+      { x: W * 0.42, y: H * 0.36, r: m * 0.09 * sc },
+      { x: W * 0.8, y: H * 0.28, r: m * 0.075 * sc },
+      { x: W * 0.56, y: H * 0.66, r: m * 0.085 * sc },
+    ];
+    if (dens > 0.4) fruit.push({ x: W * 0.1, y: H * 0.9, r: m * 0.06 * sc });
+    if (dens > 0.7) fruit.push({ x: W * 0.92, y: H * 0.86, r: m * 0.055 * sc });
+
+    // the leaf pass, fanning out from the canopy centre, then the oranges
+    const leafCols = [G.shade, G.deep, G.mid, G.light, mixHex(G.mid, highlights[1] || highlights[0], 0.35), foliage[0]];
+    const fan = (x, y) => Math.atan2(y - canopyY, x - canopyX);
+    out.push(...dLeafDabs(canopyX, canopyY, W * 0.48, H * 0.44, Math.round(150 + dens * 150), leafCols, m * 0.013 * sc, fan, [150, 235]));
+    out.push(...dLeafDabs(W * 0.8, H * 0.14, W * 0.26, H * 0.14, Math.round(26 + dens * 30), leafCols, m * 0.012 * sc, fan, [150, 235]));
+    out.push(...dLeafDabs(W * 0.3, H * 0.42, W * 0.2, H * 0.14, Math.round(18 + dens * 20), [G.mid, G.light, leafCols[4]], m * 0.011 * sc, fan, [150, 235]));
+    for (const f of fruit) out.push(D(() => drawOrange(f.x, f.y, f.r, O), boxAround(f.x, f.y, f.r * 1.6 + 16), 'y', 1, 380, 90));
+
+    // small half-hidden oranges, a few leaves crossing the fruit, light on the rinds
+    const small = [];
+    for (let i = 0; i < 3 + Math.round(dens * 4); i++) {
+      const x = rr(W * 0.2, W * 0.98), y = rr(H * 0.2, H * 0.98), r = m * rr(0.02, 0.035) * sc;
+      small.push({ color: random() < 0.5 ? O.mid : O.deep, pts: jitterEllipse(x, y, r, r * 0.95, 10, 0.1), op: 215 });
+    }
+    out.push(...dMarks(small, 260));
+    const over = [];
+    for (const f of fruit) for (let k = 0; k < 2; k++) {
+      const a = rr(0, TWO_PI), x = f.x + Math.cos(a) * f.r * 0.9, y = f.y + Math.sin(a) * f.r * 0.9, r = m * rr(0.012, 0.02) * sc * bs;
+      over.push({ color: random() < 0.5 ? G.deep : G.mid, pts: petalPts(x, y, r * 2, r * 0.7, a + rr(-0.6, 0.6), 10, 0.1), op: 200 });
+    }
+    out.push(...dMarks(over));
+    out.push(...dTouches(fruit.map((f) => [f.x - f.r * 0.3, f.y - f.r * 0.4, f.r * 0.5]), C, Math.round(S.touch * 14), () => rr(-0.5, 0.5), 0.6));
+    return out;
+  }
+
+  // Evening sea, one sail. Wetter than the shared dials, with more still-water
+  // glazes and more light on the water.
+  function buildSail(C) {
+    const out = [], { density: dens, scale: sc, soft, detail: det, brushSize: bs } = S;
+    const water = 0.6, glaze = 0.5, touch = 0.3;
+    const { washes, foliage, accents, highlights } = C;
+    const horizon = H * 0.52, sunX = W * 0.56;
+    const sky = washes[0], sea = washes[1], glow = washes[2] || highlights[0], ripple = washes[3] || mixHex(sea, foliage[0], 0.4);
+
+    // sky, a warm band at the horizon, the sea in two bands, the glow's reflection
+    if (S.coverage > 0.02) out.push(dWash(sky, Math.round(S.coverage * 200)));
+    out.push(dBand(-20, horizon * 0.7, sky, Math.round(200 - water * 40), m * 0.033));
+    out.push(dBand(horizon * 0.55, horizon + H * 0.02, glow, Math.round(190 - water * 40), m * 0.03));
+    out.push(dBand(horizon - H * 0.01, H * 0.8, sea, Math.round(210 - water * 40), m * 0.017));
+    out.push(dBand(H * 0.7, H + 20, mixHex(sea, ripple, 0.35), Math.round(215 - water * 40), m * 0.02));
+    out.push(dBlob(sunX, horizon + H * 0.12, W * 0.2, H * 0.14, mixHex(glow, highlights[0], 0.5), 150, 0.7, 0.5, 0, 0.15, 460));
+
+    // cumulus: a big lit cloud upper right, a low bank left, each a grey underside
+    // under a peach body and a lit crown; then wisps near the horizon
+    const under = mixHex(sea, foliage[2], 0.3);
+    const clouds = [
+      { x: W * 0.62, y: H * 0.2, rx: W * 0.2, ry: H * 0.12 },
+      { x: W * 0.85, y: H * 0.32, rx: W * 0.16, ry: H * 0.07 },
+      { x: W * 0.12, y: H * 0.24, rx: W * 0.17, ry: H * 0.06 },
+      { x: W * 0.3, y: H * 0.4, rx: W * 0.22, ry: H * 0.045 },
+    ];
+    if (dens > 0.6) clouds.push({ x: W * 0.45, y: H * 0.1, rx: W * 0.1, ry: H * 0.05 });
+    for (const c of clouds) {
+      const peach = random() < 0.5 ? accents[0] : (accents[1] || accents[0]);
+      out.push(dBlob(c.x, c.y + c.ry * 0.3, c.rx, c.ry * 0.7, under, 170, 0.5 + water * 0.2, 0.5, 0, 0.2, 380));
+      out.push(dBlob(c.x, c.y, c.rx * 0.95, c.ry, peach, 215, 0.45 + water * 0.2, 0.5, rr(-0.1, 0.1), 0.25 + soft * 0.15, 420));
+      out.push(dBlob(c.x - c.rx * 0.2, c.y - c.ry * 0.45, c.rx * 0.6, c.ry * 0.6, accents[2] || highlights[0], 200, 0.5, 0.5, rr(-0.2, 0.2), 0.3, 340));
+    }
+    for (let i = 0; i < 3; i++) {
+      const x = rr(W * 0.1, W * 0.9), y = rr(horizon * 0.62, horizon * 0.92);
+      out.push(dBlob(x, y, W * rr(0.08, 0.16), H * rr(0.012, 0.025), under, 120, 0.6, 0.5, 0, 0.3, 300));
+    }
+
+    // the ripples: short horizontal dashes, grey-blue with a few warm ones, longer
+    // and denser toward the bottom; then still-water glazes
+    const dashes = [];
+    for (let i = 0; i < Math.round((90 + dens * 160) * (0.3 + 0.7 * det)); i++) {
+      const y = horizon + (H - horizon) * Math.pow(random(), 0.7), near = (y - horizon) / (H - horizon), x = rr(-5, W + 5);
+      const len = m * rr(0.012, 0.04) * sc * (0.5 + near) * bs, h = m * rr(0.002, 0.0035) * (0.6 + near) * bs;
+      const dark = random() < 0.65;
+      const color = dark ? (random() < 0.5 ? ripple : mixHex(ripple, sea, 0.4)) : (random() < 0.5 ? highlights[0] : mixHex(glow, highlights[1] || highlights[0], 0.5));
+      dashes.push({ color, pts: jitterEllipse(x, y, len, h, 8, 0.2, rr(-0.06, 0.06)), op: Math.round(rr(120, 200) - water * 30) });
+    }
+    out.push(...dMarks(dashes));
+    for (let i = 0; i < Math.round(3 + glaze * 8); i++) {
+      const y = rr(horizon + 5, H), x0 = rr(-10, W * 0.5), x1 = x0 + rr(W * 0.3, W * 0.8);
+      const color = random() < 0.5 ? sea : (random() < 0.5 ? ripple : glow);
+      out.push(dGlaze(x0, y, x1, y + rr(-3, 3), color, rr(1.5, 3) * Math.sqrt(sc), 'waves'));
+    }
+
+    // the sail and its hull over a faint reflection, a rowboat with two specks aboard, glints down the light
+    const sx = W * 0.55, sy = horizon + H * 0.1, sh = m * 0.165 * sc;
+    const sailPts = [[sx, sy - sh], [sx + sh * 0.45 + rr(-2, 2), sy], [sx - sh * 0.04, sy]];
+    const jib = [[sx - sh * 0.02, sy - sh * 0.7], [sx - sh * 0.3, sy - sh * 0.02], [sx - sh * 0.03, sy]];
+    const hull = jitterEllipse(sx + sh * 0.05, sy + sh * 0.03, sh * 0.32, sh * 0.035, 8, 0.15);
+    out.push(dBlob(sx, sy + sh * 0.5, sh * 0.35, sh * 0.5, highlights[1] || highlights[0], 110, 0.7, 0.5, 0, 0.2, 320));
+    out.push(D(() => {
+      washStyle(highlights[1] || highlights[0], 250); brush.polygon(sailPts); brush.polygon(jib);
+      bloomFill(highlights[0], 160, 0.15); brush.polygon(sailPts);
+      washStyle(foliage[1], 235); brush.polygon(hull);
+    }, bboxOf([...sailPts, ...jib, ...hull], 24), 'y', -1, 440, 90));
+    const bx = W * 0.38, by = horizon + H * 0.18;
+    const boat = jitterEllipse(bx, by, m * 0.02 * sc, m * 0.004 * sc, 8, 0.15);
+    out.push(D(() => {
+      washStyle(foliage[2], 230); brush.polygon(boat);
+      centerDot(bx - m * 0.005, by - m * 0.006, m * 0.004, foliage[2], 220); centerDot(bx + m * 0.006, by - m * 0.005, m * 0.0035, foliage[2], 220);
+    }, bboxOf(boat, 14), 'x', rdir(), 160, 40));
+    const glintPts = [];
+    for (let i = 0; i < 10; i++) glintPts.push([sunX + randomGaussian(0, W * 0.1), rr(horizon + 5, H * 0.95), 12]);
+    out.push(...dTouches(glintPts, C, Math.round(touch * 18), () => rr(-0.05, 0.05)));
+    return out;
+  }
+
+  // =====================================================================
   //  Configs. Everything the vocabulary closes over that isn't in
   //  engine.js goes in `dials` so Copy code can emit it.
   // =====================================================================
@@ -682,6 +1087,8 @@ window.STYLES = window.STYLES || {};
     dWash, dBand, dBlob, dGlaze, dStrand, dLeaves, dMarks, dFlower, dPad, dFlick, dTouches,
     buildGarden, buildDawn, buildWillow, buildWisteria,
     buildPoppies, buildIrises, buildOrchard,
+    ringPts, petalPts, taperedBody, drawKoi, drawRose, drawOrange, boxAround, dLeafDabs,
+    buildKoi, buildRoses, buildOranges, buildSail,
   ];
 
   // `strokes` must name its builder literally: Copy code serialises this arrow
@@ -722,4 +1129,16 @@ window.STYLES = window.STYLES || {};
   STYLES.impressionismOrchard = scene('orchard', 'Impressionism · Orchard',
     'Light and a little giddy, spring before it’s sure of itself.',
     (palette) => buildOrchard(palette));
+  STYLES.impressionismKoi = scene('koi', 'Impressionism · Koi',
+    'Stillness is just movement too slow to notice.',
+    (palette) => buildKoi(palette));
+  STYLES.impressionismRoses = scene('roses', 'Impressionism · Roses',
+    'Everything opens at its own speed.',
+    (palette) => buildRoses(palette));
+  STYLES.impressionismOranges = scene('oranges', 'Impressionism · Oranges',
+    'Ripening is just time becoming sweet.',
+    (palette) => buildOranges(palette));
+  STYLES.impressionismSail = scene('sail', 'Impressionism · Sail',
+    'A boat is mostly waiting for wind.',
+    (palette) => buildSail(palette));
 })();

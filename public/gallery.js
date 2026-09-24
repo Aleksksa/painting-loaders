@@ -9,7 +9,9 @@ const GALLERY = [
   STYLES.impressionismGarden, STYLES.impressionismDawn,
   STYLES.impressionismWillow, STYLES.impressionismWisteria,
   STYLES.impressionismOrchard, STYLES.impressionismIrises,
-  STYLES.impressionismPoppies,
+  STYLES.impressionismPoppies, STYLES.impressionismKoi,
+  STYLES.impressionismRoses, STYLES.impressionismOranges,
+  STYLES.impressionismSail,
   STYLES.abstractionDusk,
 ];
 

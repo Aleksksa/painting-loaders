@@ -30,7 +30,7 @@
 <main>
   <h1>Render stills</h1>
   <p>Paints every style to completion and PUTs it to <code>public/stills/&lt;key&gt;.webp</code>.
-     Takes about 90 seconds — one full painting per style, by definition.</p>
+     Takes about two minutes — one full painting per style, by definition.</p>
   <p><strong>Keep this tab in the foreground.</strong> A backgrounded tab is throttled to zero
      frames and the render silently stops making progress. Headless Chrome is not a shortcut
      either: SwiftShader runs minutes per still and can hang on a dense scene.</p>
@@ -45,7 +45,9 @@
     STYLES.impressionismGarden, STYLES.impressionismDawn,
     STYLES.impressionismWillow, STYLES.impressionismWisteria,
     STYLES.impressionismOrchard, STYLES.impressionismIrises,
-    STYLES.impressionismPoppies,
+    STYLES.impressionismPoppies, STYLES.impressionismKoi,
+    STYLES.impressionismRoses, STYLES.impressionismOranges,
+    STYLES.impressionismSail,
     STYLES.abstractionDusk,
   ];
 

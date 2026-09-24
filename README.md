@@ -2,7 +2,7 @@
 
 Loading states that paint themselves, in the manner of the movements that got there first.
 
-Eight loaders across two movements — seven Monet scenes and a dusk abstraction. Each one is a
+Twelve loaders across two movements — eleven Monet scenes and a dusk abstraction. Each one is a
 real painting built stroke by stroke with
 [p5.brush](https://github.com/acamposuribe/p5.brush), not a video or a sprite sheet, so it is
 different every time it runs and it scales to any size.
@@ -72,7 +72,7 @@ and parks in a hidden staging div the rest of the time.
 
 **Nothing paints at load.** A painting costs about ten seconds of p5.brush fills — `loopMs` is
 9000, so that is the intended speed, not a bug — and computing eight of them up front froze the
-page for a minute and a half. The finished pictures ship as WebP instead (276 KB for all eight),
+page for a minute and a half. The finished pictures ship as WebP instead (357 KB for all twelve),
 and the engine only runs when someone asks to watch one being painted. Every scene uses a fixed
 seed, so a shipped still is the same picture a live repaint produces.
 
@@ -86,8 +86,8 @@ python3 tools/serve.py
 
 then open `http://localhost:8000/tools/render-stills.html` and press **Render all**. It paints
 every style and writes `public/stills/<key>.webp` back into the repo through the server's `PUT`
-handler (which only ever accepts `.webp` under `public/stills/`). It takes about 90 seconds — one full painting
-per style, by definition.
+handler (which only ever accepts `.webp` under `public/stills/`). It takes about two minutes —
+one full painting per style, by definition.
 
 Two things that will waste your afternoon otherwise:
 
@@ -96,7 +96,7 @@ Two things that will waste your afternoon otherwise:
 - **Headless is not a shortcut.** Under SwiftShader a single 600px still takes minutes and a
   dense scene can hang outright.
 
-GPU rasterisation is not bit-exact, so re-rendering rewrites all eight files even when nothing
+GPU rasterisation is not bit-exact, so re-rendering rewrites all twelve files even when nothing
 changed. The pictures are identical; the bytes are not. Commit only the ones you meant to change.
 
 ### Adding a movement
