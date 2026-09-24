@@ -1108,37 +1108,37 @@ window.STYLES = window.STYLES || {};
     vocabulary: VOCABULARY,
   });
 
-  STYLES.impressionismGarden = scene('garden', 'Impressionism · Garden',
+  STYLES.impressionismGarden = scene('garden', 'Garden',
     'Warm and a little too much, in the best way.',
     (palette) => buildGarden(palette));
-  STYLES.impressionismDawn = scene('dawn', 'Impressionism · Dawn',
+  STYLES.impressionismDawn = scene('dawn', 'Dawn',
     'Quiet, like nothing has happened yet.',
     (palette) => buildDawn(palette));
-  STYLES.impressionismWillow = scene('willow', 'Impressionism · Willow',
+  STYLES.impressionismWillow = scene('willow', 'Willow',
     'Cool and wistful, the kind of quiet you don’t want to leave.',
     (palette) => buildWillow(palette));
-  STYLES.impressionismWisteria = scene('wisteria', 'Impressionism · Wisteria',
+  STYLES.impressionismWisteria = scene('wisteria', 'Wisteria',
     'Delicate in a way that already feels like a memory.',
     (palette) => buildWisteria(palette));
-  STYLES.impressionismPoppies = scene('poppies', 'Impressionism · Poppies',
+  STYLES.impressionismPoppies = scene('poppies', 'Poppies',
     'Red that refuses to be background.',
     (palette) => buildPoppies(palette));
-  STYLES.impressionismIrises = scene('irises', 'Impressionism · Irises',
+  STYLES.impressionismIrises = scene('irises', 'Irises',
     'Purple standing at attention, politely.',
     (palette) => buildIrises(palette));
-  STYLES.impressionismOrchard = scene('orchard', 'Impressionism · Orchard',
+  STYLES.impressionismOrchard = scene('orchard', 'Orchard',
     'Light and a little giddy, spring before it’s sure of itself.',
     (palette) => buildOrchard(palette));
-  STYLES.impressionismKoi = scene('koi', 'Impressionism · Koi',
+  STYLES.impressionismKoi = scene('koi', 'Koi',
     'Stillness is just movement too slow to notice.',
     (palette) => buildKoi(palette));
-  STYLES.impressionismRoses = scene('roses', 'Impressionism · Roses',
+  STYLES.impressionismRoses = scene('roses', 'Roses',
     'Everything opens at its own speed.',
     (palette) => buildRoses(palette));
-  STYLES.impressionismOranges = scene('oranges', 'Impressionism · Oranges',
+  STYLES.impressionismOranges = scene('oranges', 'Oranges',
     'Ripening is just time becoming sweet.',
     (palette) => buildOranges(palette));
-  STYLES.impressionismSail = scene('sail', 'Impressionism · Sail',
+  STYLES.impressionismSail = scene('sail', 'Sail',
     'A boat is mostly waiting for wind.',
     (palette) => buildSail(palette));
 })();

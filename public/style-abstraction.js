@@ -226,7 +226,7 @@ window.STYLES = window.STYLES || {};
     key: 'abstraction-dusk',
     movement: 'Abstraction',
     note: 'The hour when color stops trying to be anything specific.',
-    label: 'Abstraction · Dusk',
+    label: 'Dusk',
     canvasSize: 600,
     loopMs: 9000,
     holdMs: 1500,

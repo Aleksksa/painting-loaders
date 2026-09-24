@@ -106,8 +106,8 @@ Write a `style-<movement>.js` that exports a config onto `window.STYLES`:
 ```js
 STYLES.myMovement = {
   key: 'my-movement',
-  movement: 'My Movement',
-  label: 'My Movement · Scene',
+  movement: 'My Movement',                   // groups the style; never shown on the page
+  label: 'Scene',                            // the name on the card and in the full-screen view
   note: 'One line about how it paints, for the full-screen view.',
   canvasSize: 600,
   loopMs: 9000,

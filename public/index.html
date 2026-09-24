@@ -181,11 +181,7 @@
       text-align: center; max-width: 46ch;
       animation: pl-rise 550ms 80ms cubic-bezier(.2,.7,.3,1) both;
     }
-    .eyebrow { font: 500 11px/1 var(--body); letter-spacing: 0.2em; text-transform: uppercase; color: var(--soft); }
     .detail-text h2 { margin: 0; font-size: clamp(26px, 2.7vw, 38px); }
-    /* The movement reads as a caption under the scene name, so it sits closer to
-       the title than the 14px stack gap would put it. */
-    .detail-text h2 + .eyebrow:not([hidden]) { margin-top: -4px; }
     .detail-text p { margin: 0; font: 400 15px/1.6 var(--body); color: var(--soft); text-wrap: pretty; }
     #detail-status {
       min-height: 1.3em; text-align: center;
@@ -221,12 +217,6 @@
       21%, 66%  { opacity: 0.88; transform: scale(1); }
       92%, 100% { opacity: 0;    transform: scale(0.94); }
     }
-    @keyframes pl-wash {
-      0%        { opacity: 0;    transform: scale(0.5); }
-      20%       { opacity: 0.42; transform: scale(1.06); }
-      30%, 62%  { opacity: 0.38; transform: scale(1); }
-      92%, 100% { opacity: 0;    transform: scale(0.96); }
-    }
     @keyframes pl-heart {
       0%        { opacity: 0;    transform: scale(0.2); }
       10%       { opacity: 0.95; transform: scale(1.08); }
@@ -244,7 +234,7 @@
     /* Wet paint over paper. On the dark theme there is no paper to soak into,
        so the pastels are left to sit on top of it instead. */
     [data-theme="light"] #boot .bloom { mix-blend-mode: multiply; }
-    #boot .petal, #boot .heart, #boot .wash {
+    #boot .petal, #boot .heart {
       opacity: 0; transform-box: fill-box;
       animation: pl-petal 2.6s cubic-bezier(.2,.7,.3,1) infinite;
       animation-delay: calc(var(--i, 0) * 110ms);
@@ -255,15 +245,12 @@
     #boot .petal { fill: var(--petal); transform-origin: 50% 100%; filter: blur(0.4px); }
     [data-theme="light"] #boot .petal { mix-blend-mode: multiply; }
     [data-theme="dark"] #boot .petal { mix-blend-mode: screen; }
-    /* the water that ran ahead of the paint */
-    #boot .wash { fill: #f0bdd2; transform-origin: 50% 50%; filter: blur(7px); animation-name: pl-wash; }
     #boot .heart { fill: #f7e0a4; transform-origin: 50% 50%; animation-name: pl-heart; }
 
     @media (prefers-reduced-motion: reduce) {
       * { animation: none !important; }
       .card:hover .tile, .card:focus-within .tile, #detail .copy:hover { transform: none; }
       body, .btn, .tile, .status { transition: none; }
-      #boot .wash { opacity: 0.38; }
       #boot .petal { opacity: 0.88; }
       #boot .heart { opacity: 0.92; }
     }
@@ -290,7 +277,6 @@
 <div id="boot">
   <span class="bloom" aria-hidden="true">
     <svg viewBox="-40 -40 80 80" width="84" height="84">
-      <ellipse class="wash" cx="0" cy="-2" rx="26" ry="24"/>
       <g>
         <g transform="rotate(2) scale(1.02 0.98)"><path class="petal" style="--i:0;--petal:#f4b3cb" d="M0 2C-9-3-13-11-12-18-11-25-5-30 0-29 6-30 12-25 12-18 13-10 8-4 0 2Z"/></g>
         <g transform="rotate(61) scale(0.96 1.03)"><path class="petal" style="--i:1;--petal:#ea8fb4" d="M0 2C-9-3-13-11-12-18-11-25-5-30 0-29 6-30 12-25 12-18 13-10 8-4 0 2Z"/></g>
@@ -342,7 +328,6 @@
     </div>
     <div class="detail-text">
       <h2 class="display" id="detail-label"></h2>
-      <span class="eyebrow" id="detail-movement"></span>
       <p id="detail-note"></p>
       <button class="btn copy" id="detail-copy" type="button">
         <i data-icon="copy"></i><span class="copy-label">Copy code</span>

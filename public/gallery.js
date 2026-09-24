@@ -164,14 +164,7 @@ const detailText = document.querySelector('.detail-text');
 function showDetail(i) {
   const cfg = cards[i].cfg;
   detailIndex = i;
-  // Wall-label form: the movement above, the scene below. Labels are written
-  // "Movement · Scene", so split on the middot; a style with no scene keeps its
-  // whole label as the title and drops the eyebrow rather than saying it twice.
-  const scene = cfg.label.split('·').pop().trim();
-  const eyebrow = document.getElementById('detail-movement');
-  eyebrow.textContent = cfg.movement;
-  eyebrow.hidden = cfg.movement === scene;
-  document.getElementById('detail-label').textContent = scene;
+  document.getElementById('detail-label').textContent = cfg.label;
   document.getElementById('detail-note').textContent = cfg.note || '';
   detailTile.style.setProperty('--ground', cfg.palette.ground);
   engine.mount(detailTile);
